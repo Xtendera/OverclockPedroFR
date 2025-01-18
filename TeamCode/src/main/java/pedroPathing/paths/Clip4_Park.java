@@ -120,6 +120,7 @@ public class Clip4_Park extends OpMode {
     /** This method is called once at the init of the OpMode. **/
     @Override
     public void init() {
+        /** get hardware map... **/
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -130,6 +131,7 @@ public class Clip4_Park extends OpMode {
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
+        /** set the starting pos to starting pos **/
         follower.setStartingPose(startPose);
         buildPaths();
     }
