@@ -2,21 +2,24 @@ package pedroPathing.constants;
 
 import com.pedropathing.localization.*;
 import com.pedropathing.localization.constants.*;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 public class LConstants {
     static {
-        ThreeWheelConstants.forwardTicksToInches = .001989436789;
-        ThreeWheelConstants.strafeTicksToInches = .001989436789;
-        ThreeWheelConstants.turnTicksToInches = .001989436789;
-        ThreeWheelConstants.leftY = 1;
-        ThreeWheelConstants.rightY = -1;
-        ThreeWheelConstants.strafeX = -2.5;
-        ThreeWheelConstants.leftEncoder_HardwareMapName = "leftFront";
-        ThreeWheelConstants.rightEncoder_HardwareMapName = "rightRear";
-        ThreeWheelConstants.strafeEncoder_HardwareMapName = "rightFront";
-        ThreeWheelConstants.leftEncoderDirection = Encoder.REVERSE;
-        ThreeWheelConstants.rightEncoderDirection = Encoder.REVERSE;
-        ThreeWheelConstants.strafeEncoderDirection = Encoder.FORWARD;
+        ThreeWheelIMUConstants.forwardTicksToInches = .0029517817865700974;
+        ThreeWheelIMUConstants.strafeTicksToInches = .002956906371274946;
+        ThreeWheelIMUConstants.turnTicksToInches = .0020191615827405977;
+        ThreeWheelIMUConstants.leftY = 6.5;
+        ThreeWheelIMUConstants.rightY = -6.5;
+        ThreeWheelIMUConstants.strafeX = -3.625;
+        ThreeWheelIMUConstants.leftEncoder_HardwareMapName = "leftFront";
+        ThreeWheelIMUConstants.rightEncoder_HardwareMapName = "rightFront";
+        ThreeWheelIMUConstants.strafeEncoder_HardwareMapName = "leftBack";
+        ThreeWheelIMUConstants.leftEncoderDirection = Encoder.REVERSE;
+        ThreeWheelIMUConstants.rightEncoderDirection = Encoder.REVERSE;
+        ThreeWheelIMUConstants.strafeEncoderDirection = Encoder.REVERSE;
+        ThreeWheelIMUConstants.IMU_HardwareMapName = "imu";
+        ThreeWheelIMUConstants.IMU_Orientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.RIGHT);
     }
 }
 
