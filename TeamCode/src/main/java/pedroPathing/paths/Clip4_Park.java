@@ -75,21 +75,26 @@ public class Clip4_Park extends OpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                /**Raise Slide**/
                 slider.highChamberLoad();
                 follower.followPath(scoreSlide);
                 setPathState(1);
                 break;
             case 1:
+                /**Go to clipping position IF not moving already (which it shouldn't (but just in case))**/
                 if (slider.highChamberLoad() && !follower.isBusy()) {
                     slider.clearAction();
                     follower.followPath(scorePreload, true);
                     setPathState(2);
                 }
             case 2:
+                /**Go down to clip the clip**/
                 if (!follower.isBusy()) {
                     slider.highChamberScore();
                     setPathState(-1);
                 }
+                //Yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay
+                // we did a thing
                 break;
         }
     }
