@@ -116,22 +116,27 @@ public class Clip4_Park extends OpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                /**Raise Slide**/
                 wrist.wristUp();
                 slider.highChamberLoad();
                 follower.followPath(scoreSlide);
                 setPathState(1);
                 break;
             case 1:
+                /**Go to clipping position IF not moving already (which it shouldn't (but just in case))**/
                 if (slider.highChamberLoad() && !follower.isBusy()) {
                     slider.clearAction();
                     follower.followPath(scorePreload, true);
                     setPathState(2);
                 }
             case 2:
+                /**Go down to clip the clip**/
                 if (!follower.isBusy()) {
                     slider.highChamberScore();
                     setPathState(3);
                 }
+                //Yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay
+                // we did a thing
                 break;
             case 3:
                 if (slider.highChamberScore() && pathTimer.getElapsedTime() > 600) {
@@ -206,6 +211,7 @@ public class Clip4_Park extends OpMode {
     /** This method is called once at the init of the OpMode. **/
     @Override
     public void init() {
+        /** get hardware map... **/
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
@@ -217,6 +223,7 @@ public class Clip4_Park extends OpMode {
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
+        /** set the starting pos to starting pos **/
         follower.setStartingPose(startPose);
         buildPaths();
     }
