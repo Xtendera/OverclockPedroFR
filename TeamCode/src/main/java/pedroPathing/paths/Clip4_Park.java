@@ -12,6 +12,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import pedroPathing.actions.ArmAction;
 import pedroPathing.actions.SliderAction;
 import pedroPathing.actions.SpecClawAction;
 import pedroPathing.actions.WristAction;
@@ -40,6 +41,7 @@ public class Clip4_Park extends OpMode {
 
     private SliderAction slider;
     private WristAction wrist;
+    private ArmAction arm;
     private SpecClawAction specClaw;
 
     /** Start Pose of our robot */
@@ -49,9 +51,23 @@ public class Clip4_Park extends OpMode {
 
     private final Pose scoreSlidePose = new Pose(32, 69, Math.toRadians(0));
     private final Pose scorePose = new Pose(38, 69, Math.toRadians(0));
+
+    private final Pose pushPre1ControlPose = new Pose(2.33, 45.2);
+    private final Pose pushPre1Control2Pose = new Pose(60, 36);
+    private final Pose pushPre1Pose = new Pose(62, 20, Math.toRadians(90));
+    private final Pose push1Pose = new Pose(27, 20, Math.toRadians(90));
+
+    private final Pose pushPre2ControlPose = new Pose(50, 32);
+    private final Pose pushPre2Pose = new Pose(62, 12, Math.toRadians(90));
+    private final Pose push2Pose = new Pose(18, 12, Math.toRadians(90));
+
+    private final Pose specWaitPose = new Pose(40, 12, Math.toRadians(180));
+    private final Pose specCollectPose = new Pose(14, 14, Math.toRadians(180));
+    private final Pose specSlidePose = new Pose(14, 28, Math.toRadians(180));
+
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scoreSlide;
-    private PathChain scorePreload;
+    private PathChain scorePreload, push2Sample, specWait, specCollect, specSlide;
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
     public void buildPaths() {
@@ -65,6 +81,31 @@ public class Clip4_Park extends OpMode {
                 .setConstantHeadingInterpolation(scoreSlidePose.getHeading())
                 .build();
 
+        push2Sample = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(scorePose), new Point(pushPre1ControlPose), new Point(pushPre1Control2Pose), new Point(pushPre1Pose)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pushPre1Pose.getHeading())
+                .addPath(new BezierLine(new Point(pushPre1Pose), new Point(push1Pose)))
+                .setConstantHeadingInterpolation(pushPre1Pose.getHeading())
+                .addPath(new BezierCurve(new Point(push1Pose), new Point(pushPre2ControlPose), new Point(pushPre2Pose)))
+                .setConstantHeadingInterpolation(push1Pose.getHeading())
+                .addPath(new BezierLine(new Point(pushPre2Pose), new Point(push2Pose)))
+                .setConstantHeadingInterpolation(push2Pose.getHeading())
+                .build();
+
+        specWait = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(push2Pose), new Point(specWaitPose)))
+                .setLinearHeadingInterpolation(push2Pose.getHeading(), specWaitPose.getHeading())
+                .build();
+
+        specCollect = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(specWaitPose), new Point(specCollectPose)))
+                .setConstantHeadingInterpolation(specWaitPose.getHeading())
+                .build();
+
+        specSlide = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(specCollectPose), new Point(specSlidePose)))
+                .setConstantHeadingInterpolation(specCollectPose.getHeading())
+                .build();
         /* Here is an example for Constant Interpolation
         scorePreload.setConstantInterpolation(startPose.getHeading()); */
     }
@@ -75,6 +116,7 @@ public class Clip4_Park extends OpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                wrist.wristUp();
                 slider.highChamberLoad();
                 follower.followPath(scoreSlide);
                 setPathState(1);
@@ -88,7 +130,51 @@ public class Clip4_Park extends OpMode {
             case 2:
                 if (!follower.isBusy()) {
                     slider.highChamberScore();
-                    setPathState(-1);
+                    setPathState(3);
+                }
+                break;
+            case 3:
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 600) {
+                    slider.clearAction();
+                    specClaw.openClaw();
+                    setPathState(4);
+                }
+                break;
+            case 4:
+                if (pathTimer.getElapsedTime() > 300) {
+                    follower.followPath(push2Sample);
+
+                    specClaw.closeClaw();
+                    slider.reset();
+                    setPathState(5);
+                }
+                break;
+            case 5:
+                if (!follower.isBusy()) {
+                    follower.followPath(specWait, true);
+                    slider.clearAction();
+                    slider.specLoad();
+                    setPathState(6);
+                }
+                break;
+            case 6:
+                if (!follower.isBusy() && slider.specLoad() && pathTimer.getElapsedTime() > 400) {
+                    follower.followPath(specCollect, true);
+                    slider.clearAction();
+                    specClaw.openClaw();
+                    setPathState(7);
+                }
+                break;
+            case 7:
+                if (!follower.isBusy() && pathTimer.getElapsedTime() > 600) {
+                    follower.followPath(specSlide);
+                    setPathState(8);
+                }
+                break;
+            case 8:
+                if (!follower.isBusy()) {
+                    specClaw.closeClaw();
+                    setPathState(9);
                 }
                 break;
         }
@@ -127,6 +213,7 @@ public class Clip4_Park extends OpMode {
         slider = new SliderAction(hardwareMap);
         wrist = new WristAction(hardwareMap);
         specClaw = new SpecClawAction(hardwareMap);
+        arm = new ArmAction(hardwareMap);
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);

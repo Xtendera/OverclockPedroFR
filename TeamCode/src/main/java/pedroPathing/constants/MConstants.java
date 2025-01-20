@@ -8,9 +8,19 @@ public class MConstants {
     public static double ticksPerOutputRev = ticksPerRev*slidesGearRatio;
     public static double ticksPerMM = ticksPerOutputRev/spoolCircumference;
 
-    public static double highChamberLoad = 529*ticksPerMM;
-    public static double highChamberScore = 429*ticksPerMM;
+    public static double sliderReset = 0;
+    public static double highChamberLoad = 530*ticksPerMM;
+    public static double highChamberScore = 410*ticksPerMM;
+    public static double specLoad = 145*ticksPerMM;
 
     // Wrist
     public static double wristUp = 0.5;
+
+    // Arm
+    public static double armStowed = 0.685;
+    public static double armPickup = 0.06;
+
+    // Spec Claw
+    public static double specClawClosed = 0.7;
+    public static double specClawOpen = 0.35;
 }

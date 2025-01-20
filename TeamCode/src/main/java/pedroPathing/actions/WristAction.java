@@ -11,7 +11,9 @@ public class WristAction {
 
     public WristAction(HardwareMap hardwareMap) {
         wrist = hardwareMap.servo.get("wrist");
+    }
 
+    public void wristUp() {
         wrist.setPosition(MConstants.wristUp);
     }
 

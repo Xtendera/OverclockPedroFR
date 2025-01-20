@@ -33,6 +33,18 @@ public class SliderAction {
         return currAction.run();
     }
 
+    public boolean specLoad() {
+        if (!(currAction instanceof SpecLoad))
+            currAction = new SpecLoad();
+        return currAction.run();
+    }
+
+    public boolean reset() {
+        if (!(currAction instanceof Reset))
+            currAction = new Reset();
+        return currAction.run();
+    }
+
     public class HighChamberLoad implements Action {
         private boolean isInit = false;
 
@@ -68,6 +80,44 @@ public class SliderAction {
             }
 
             return sliderRightMotor.getCurrentPosition() >= (int) MConstants.highChamberScore || sliderLeftMotor.getCurrentPosition() >= (int) MConstants.highChamberScore;
+        }
+    }
+
+    public class SpecLoad implements Action {
+        private boolean isInit = false;
+
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                sliderRightMotor.setTargetPosition((int) (MConstants.specLoad));
+                sliderLeftMotor.setTargetPosition((int) (MConstants.specLoad));
+                sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderRightMotor.setPower(1.0f);
+                sliderLeftMotor.setPower(1.0f);
+                isInit = true;
+            }
+
+            return sliderRightMotor.getCurrentPosition() >= (int) MConstants.specLoad || sliderLeftMotor.getCurrentPosition() >= (int) MConstants.specLoad;
+        }
+    }
+
+    public class Reset implements Action {
+        private boolean isInit = false;
+
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                sliderRightMotor.setTargetPosition((int) (MConstants.sliderReset));
+                sliderLeftMotor.setTargetPosition((int) (MConstants.sliderReset));
+                sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderRightMotor.setPower(1.0f);
+                sliderLeftMotor.setPower(1.0f);
+                isInit = true;
+            }
+
+            return sliderRightMotor.getCurrentPosition() <= (int) MConstants.sliderReset + 10 || sliderLeftMotor.getCurrentPosition() <= (int) MConstants.sliderReset + 10;
         }
     }
 }

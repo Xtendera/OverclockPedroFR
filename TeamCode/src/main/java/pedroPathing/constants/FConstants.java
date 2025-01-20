@@ -1,5 +1,6 @@
 package pedroPathing.constants;
 
+import com.pedropathing.localization.GoBildaPinpointDriver;
 import com.pedropathing.localization.Localizers;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.util.CustomFilteredPIDFCoefficients;
@@ -28,7 +29,7 @@ public class FConstants {
         FollowerConstants.forwardZeroPowerAcceleration = -34.74808739181698;
         FollowerConstants.lateralZeroPowerAcceleration = -55.46904226735236;
 
-        FollowerConstants.translationalPIDFCoefficients.setCoefficients(0.1,0,0.01,0);
+        FollowerConstants.translationalPIDFCoefficients.setCoefficients(0.06,0,0.01,0);
         FollowerConstants.useSecondaryTranslationalPID = false;
         FollowerConstants.secondaryTranslationalPIDFCoefficients.setCoefficients(0.1,0,0.01,0); // Not being used, @see useSecondaryTranslationalPID
 
