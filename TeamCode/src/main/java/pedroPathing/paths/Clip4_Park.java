@@ -18,16 +18,7 @@ import pedroPathing.actions.SpecClawAction;
 import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
-
-/**
- * This is an example auto that showcases movement and control of two servos autonomously.
- * It is a 0+4 (Specimen + Sample) bucket auto. It scores a neutral preload and then pickups 3 samples from the ground and scores them before parking.
- * There are examples of different ways to build paths.
- * A path progression method has been created and can advance based on time, position, or other factors.
- *
- * @author Baron Henderson - 20077 The Indubitables
- * @version 2.0, 11/28/2024
- */
+import pedroPathing.constants.MConstants;
 
 @Autonomous(name = "Clip4_Park", group = "AAA")
 public class Clip4_Park extends OpMode {
@@ -49,36 +40,39 @@ public class Clip4_Park extends OpMode {
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
 
-    private final Pose scoreSlidePose = new Pose(32, 69, Math.toRadians(0));
+//    private final Pose scoreSlidePose = new Pose(32, 69, Math.toRadians(0));
     private final Pose scorePose = new Pose(38, 69, Math.toRadians(0));
 
     private final Pose pushPre1ControlPose = new Pose(2.33, 45.2);
     private final Pose pushPre1Control2Pose = new Pose(60, 36);
-    private final Pose pushPre1Pose = new Pose(62, 20, Math.toRadians(90));
-    private final Pose push1Pose = new Pose(27, 20, Math.toRadians(90));
+    private final Pose pushPre1Pose = new Pose(62, 26, Math.toRadians(90));
+    private final Pose push1Pose = new Pose(24, 26, Math.toRadians(90));
 
     private final Pose pushPre2ControlPose = new Pose(50, 32);
-    private final Pose pushPre2Pose = new Pose(62, 12, Math.toRadians(90));
-    private final Pose push2Pose = new Pose(18, 12, Math.toRadians(90));
+    private final Pose pushPre2Pose = new Pose(62, 18, Math.toRadians(90));
+    private final Pose push2Pose = new Pose(15, 18, Math.toRadians(90));
 
-    private final Pose specWaitPose = new Pose(40, 12, Math.toRadians(180));
-    private final Pose specCollectPose = new Pose(14, 14, Math.toRadians(180));
-    private final Pose specSlidePose = new Pose(14, 28, Math.toRadians(180));
+    private final Pose specWaitPose = new Pose(40, 18, Math.toRadians(180));
+    private final Pose specCollectPose = new Pose(8.3, 18, Math.toRadians(180));
+    private final Pose specSlidePose = new Pose(8.3, 28, Math.toRadians(180));
+
+    private final Pose score2ControlPose = new Pose(12.8, 62.5);
+    private final Pose score2Pose = new Pose(38, 71, Math.toRadians(0));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scoreSlide;
-    private PathChain scorePreload, push2Sample, specWait, specCollect, specSlide;
+    private PathChain scorePreload, push2Sample, specWait, specCollect, specSlide, scoreSpec2;
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
     public void buildPaths() {
 
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
 
-        scoreSlide = new Path(new BezierLine(new Point(startPose), new Point(scoreSlidePose)));
+//        scoreSlide = new Path(new BezierLine(new Point(startPose), new Point(scoreSlidePose)));
 
         scorePreload = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(scoreSlidePose), new Point(scorePose)))
-                .setConstantHeadingInterpolation(scoreSlidePose.getHeading())
+                .addPath(new BezierLine(new Point(startPose), new Point(scorePose)))
+                .setConstantHeadingInterpolation(startPose.getHeading())
                 .build();
 
         push2Sample = follower.pathBuilder()
@@ -106,6 +100,11 @@ public class Clip4_Park extends OpMode {
                 .addPath(new BezierLine(new Point(specCollectPose), new Point(specSlidePose)))
                 .setConstantHeadingInterpolation(specCollectPose.getHeading())
                 .build();
+
+        scoreSpec2 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(specSlidePose), new Point(score2ControlPose), new Point(score2Pose)))
+                .setLinearHeadingInterpolation(specSlidePose.getHeading(), score2Pose.getHeading())
+                .build();
         /* Here is an example for Constant Interpolation
         scorePreload.setConstantInterpolation(startPose.getHeading()); */
     }
@@ -119,16 +118,16 @@ public class Clip4_Park extends OpMode {
                 /**Raise Slide**/
                 wrist.wristUp();
                 slider.highChamberLoad();
-                follower.followPath(scoreSlide);
+                follower.followPath(scorePreload, true);
                 setPathState(1);
                 break;
             case 1:
                 /**Go to clipping position IF not moving already (which it shouldn't (but just in case))**/
                 if (slider.highChamberLoad() && !follower.isBusy()) {
                     slider.clearAction();
-                    follower.followPath(scorePreload, true);
                     setPathState(2);
                 }
+                break;
             case 2:
                 /**Go down to clip the clip**/
                 if (!follower.isBusy()) {
@@ -149,8 +148,7 @@ public class Clip4_Park extends OpMode {
                 if (pathTimer.getElapsedTime() > 300) {
                     follower.followPath(push2Sample);
 
-                    specClaw.closeClaw();
-                    slider.reset();
+                    slider.specLoad();
                     setPathState(5);
                 }
                 break;
@@ -158,15 +156,12 @@ public class Clip4_Park extends OpMode {
                 if (!follower.isBusy()) {
                     follower.followPath(specWait, true);
                     slider.clearAction();
-                    slider.specLoad();
                     setPathState(6);
                 }
                 break;
             case 6:
-                if (!follower.isBusy() && slider.specLoad() && pathTimer.getElapsedTime() > 400) {
+                if (!follower.isBusy() && pathTimer.getElapsedTime() > 400) {
                     follower.followPath(specCollect, true);
-                    slider.clearAction();
-                    specClaw.openClaw();
                     setPathState(7);
                 }
                 break;
@@ -179,7 +174,22 @@ public class Clip4_Park extends OpMode {
             case 8:
                 if (!follower.isBusy()) {
                     specClaw.closeClaw();
+                    slider.highChamberLoad();
+                    follower.followPath(scoreSpec2, true);
                     setPathState(9);
+                }
+                break;
+            case 9:
+                if (!follower.isBusy()) {
+                    slider.highChamberScore();
+                    setPathState(10);
+                }
+                break;
+            case 10:
+                if (slider.highChamberScore()) {
+                    slider.clearAction();
+                    specClaw.openClaw();
+                    setPathState(11);
                 }
                 break;
         }

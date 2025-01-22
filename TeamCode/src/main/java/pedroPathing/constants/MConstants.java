@@ -11,7 +11,7 @@ public class MConstants {
     public static double sliderReset = 0;
     public static double highChamberLoad = 530*ticksPerMM;
     public static double highChamberScore = 410*ticksPerMM;
-    public static double specLoad = 145*ticksPerMM;
+    public static double specLoad = 125*ticksPerMM;
 
     // Wrist
     public static double wristUp = 0.5;

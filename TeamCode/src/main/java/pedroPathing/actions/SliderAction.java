@@ -10,7 +10,10 @@ public class SliderAction {
     private final DcMotor sliderRightMotor;
     private final DcMotor sliderLeftMotor;
 
+    private final int threshold = 10;
+
     private Action currAction;
+    private double currPosition;
     public SliderAction (HardwareMap hardwareMap) {
         sliderRightMotor = hardwareMap.dcMotor.get("slideRightMotor");
         sliderLeftMotor = hardwareMap.dcMotor.get("slideLeftMotor");
@@ -19,6 +22,7 @@ public class SliderAction {
 
     public void clearAction() {
         currAction = null;
+        currPosition = 0;
     }
 
     public boolean highChamberLoad() {
@@ -45,6 +49,35 @@ public class SliderAction {
         return currAction.run();
     }
 
+    public void goTo(double position) {
+        if (currPosition != position) {
+            currAction = new GoTo(position);
+            currPosition = position;
+        }
+        currAction.run();
+    }
+
+    public boolean isBusy() {
+        return !currAction.run();
+    }
+
+    private class GoTo implements Action {
+        double position;
+        public GoTo(double position) {
+            this.position = position;
+            sliderRightMotor.setTargetPosition((int) position);
+            sliderLeftMotor.setTargetPosition((int) position);
+            sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            sliderRightMotor.setPower(1.0f);
+            sliderLeftMotor.setPower(1.0f);
+        }
+
+        @Override
+        public boolean run() {
+            return Math.abs(sliderLeftMotor.getCurrentPosition() - position) <= threshold && Math.abs(sliderRightMotor.getCurrentPosition() - position) <= threshold;
+        }
+    }
     public class HighChamberLoad implements Action {
         private boolean isInit = false;
 
@@ -60,7 +93,7 @@ public class SliderAction {
                 isInit = true;
             }
 
-            return sliderRightMotor.getCurrentPosition() >= (int) MConstants.highChamberLoad || sliderLeftMotor.getCurrentPosition() >= (int) MConstants.highChamberLoad;
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.highChamberLoad) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.highChamberLoad) <= threshold;
         }
     }
 
@@ -79,7 +112,7 @@ public class SliderAction {
                 isInit = true;
             }
 
-            return sliderRightMotor.getCurrentPosition() >= (int) MConstants.highChamberScore || sliderLeftMotor.getCurrentPosition() >= (int) MConstants.highChamberScore;
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.highChamberScore) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.highChamberScore) <= threshold;
         }
     }
 
