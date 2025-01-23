@@ -60,16 +60,12 @@ public class Clip4_Park extends OpMode {
     private final Pose score2Pose = new Pose(38, 71, Math.toRadians(0));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
-    private Path scoreSlide;
     private PathChain scorePreload, push2Sample, specWait, specCollect, specSlide, scoreSpec2;
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
     public void buildPaths() {
 
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
-
-//        scoreSlide = new Path(new BezierLine(new Point(startPose), new Point(scoreSlidePose)));
-
         scorePreload = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(startPose), new Point(scorePose)))
                 .setConstantHeadingInterpolation(startPose.getHeading())
@@ -138,14 +134,14 @@ public class Clip4_Park extends OpMode {
                 // we did a thing
                 break;
             case 3:
-                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 600) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 350) {
                     slider.clearAction();
                     specClaw.openClaw();
                     setPathState(4);
                 }
                 break;
             case 4:
-                if (pathTimer.getElapsedTime() > 300) {
+                if (pathTimer.getElapsedTime() > 150) {
                     follower.followPath(push2Sample);
 
                     slider.specLoad();
@@ -186,7 +182,7 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 10:
-                if (slider.highChamberScore()) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 350) {
                     slider.clearAction();
                     specClaw.openClaw();
                     setPathState(11);
