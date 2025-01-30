@@ -17,7 +17,7 @@ public class SliderAction {
     public SliderAction (HardwareMap hardwareMap) {
         sliderRightMotor = hardwareMap.dcMotor.get("slideRightMotor");
         sliderLeftMotor = hardwareMap.dcMotor.get("slideLeftMotor");
-        sliderRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        sliderLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
     public void clearAction() {
@@ -40,6 +40,12 @@ public class SliderAction {
     public boolean specLoad() {
         if (!(currAction instanceof SpecLoad))
             currAction = new SpecLoad();
+        return currAction.run();
+    }
+
+    public boolean highBasketScore() {
+        if (!(currAction instanceof HighBasketScore))
+            currAction = new HighBasketScore();
         return currAction.run();
     }
 
@@ -151,6 +157,25 @@ public class SliderAction {
             }
 
             return sliderRightMotor.getCurrentPosition() <= (int) MConstants.sliderReset + 10 || sliderLeftMotor.getCurrentPosition() <= (int) MConstants.sliderReset + 10;
+        }
+    }
+
+    public class HighBasketScore implements Action {
+        private boolean isInit = false;
+
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                sliderRightMotor.setTargetPosition((int) (MConstants.highBasketScore));
+                sliderLeftMotor.setTargetPosition((int) (MConstants.highBasketScore));
+                sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderRightMotor.setPower(1.0f);
+                sliderLeftMotor.setPower(1.0f);
+                isInit = true;
+            }
+
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.highBasketScore) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.highBasketScore) <= threshold;
         }
     }
 }
