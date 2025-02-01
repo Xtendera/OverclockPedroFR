@@ -16,5 +16,8 @@ public class WristAction {
     public void wristUp() {
         wrist.setPosition(MConstants.wristUp);
     }
+    public void wristLeft() {
+        wrist.setPosition(MConstants.wristLeft);
+    }
 
 }

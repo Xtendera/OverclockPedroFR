@@ -2,8 +2,6 @@ package pedroPathing.paths;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.pathgen.BezierCurve;
-import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Constants;
@@ -19,8 +17,8 @@ import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
 
-@Autonomous(name = "KFC4_Park", group = "AAA")
-public class KFC4_Park extends OpMode {
+@Autonomous(name = "OTM_KFC4_Park", group = "AAA")
+public class OTM_KFC4_Park extends OpMode {
     private Follower follower;
 
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -35,7 +33,6 @@ public class KFC4_Park extends OpMode {
 
     private final Pose scoreControlPose = new Pose(36.6, 116.7);
     private final Pose scorePose = new Pose(18.5, 129, Math.toRadians(135));
-    private final Pose scorePose2 = new Pose(18.5, 129, Math.toRadians(135));
 
     private final Pose pickup1PrePose = new Pose(27.75, 117.5, Math.toRadians(0));
     private final Pose pickup1Pose = new Pose(27.75, 122, Math.toRadians(0));

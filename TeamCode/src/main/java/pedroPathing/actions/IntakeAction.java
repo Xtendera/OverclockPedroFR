@@ -25,8 +25,11 @@ public class IntakeAction {
         currAction = null;
     }
 
-    public void intake() {
-        intake.setPower(1.0);
+    public boolean intake() {
+        if (!(currAction instanceof IntakeIAction)) {
+            currAction = new IntakeIAction();
+        }
+        return currAction.run();
     }
 
     public void stoptake() {
@@ -49,6 +52,18 @@ public class IntakeAction {
                 isInit = true;
             }
             return !intakeFull();
+        }
+    }
+
+    private class IntakeIAction implements Action {
+        boolean isInit = false;
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                intake.setPower(1.0);
+                isInit = true;
+            }
+            return intakeFull();
         }
     }
 }
