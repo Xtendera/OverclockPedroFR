@@ -2,8 +2,6 @@ package pedroPathing.paths;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.pathgen.BezierCurve;
-import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Constants;
@@ -34,21 +32,24 @@ public class KFC4_Park extends OpMode {
     private final Pose startPose = new Pose(8, 114, Math.toRadians(90));
 
     private final Pose scoreControlPose = new Pose(36.6, 116.7);
-    private final Pose scorePose = new Pose(18.5, 129, Math.toRadians(135));
-    private final Pose scorePose2 = new Pose(18.5, 129, Math.toRadians(135));
+    private final Pose scorePose = new Pose(17, 128, Math.toRadians(135));
+//    private final Pose scorePose2 = new Pose(18.5, 129, Math.toRadians(135));
 
-    private final Pose pickup1PrePose = new Pose(27.75, 117.5, Math.toRadians(0));
-    private final Pose pickup1Pose = new Pose(27.75, 122, Math.toRadians(0));
+    private final Pose pickup1PrePose = new Pose(26.75, 117.5, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(26.75, 122, Math.toRadians(0));
 
     private final Pose pickup2PrePose = new Pose(28.5, 124.5, Math.toRadians(0));
     private final Pose pickup2Pose = new Pose(28.5, 129, Math.toRadians(0));
 
-    private final Pose pickup3PrePose = new Pose(45, 118, Math.toRadians(90));
-    private final Pose pickup3Pose = new Pose(45, 123, Math.toRadians(90));
-    private final Pose pickup3PostPose = new Pose(45, 120, Math.toRadians(90));
+    private final Pose pickup3PrePose = new Pose(44, 118, Math.toRadians(90));
+    private final Pose pickup3Pose = new Pose(44, 123, Math.toRadians(90));
+    private final Pose pickup3PostPose = new Pose(44, 120, Math.toRadians(90));
+
+    private final Pose parkControlPose = new Pose(83, 135);
+    private final Pose parkPose = new Pose(63, 98, Math.toRadians(270));
 
     private int pathState;
-    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3;
+    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3, park;
 
     private PathChain currPickupPre, currPickup, currScore;
 
@@ -102,6 +103,10 @@ public class KFC4_Park extends OpMode {
                 .addBezierLine(new Point(pickup3PostPose), new Point(scorePose))
                 .setLinearHeadingInterpolation(pickup3PostPose.getHeading(), scorePose.getHeading())
                 .build();
+        park = follower.pathBuilder()
+                .addBezierCurve(new Point(scorePose), new Point(parkControlPose), new Point(parkPose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
+                .build();
     }
     public void autonomousPathUpdate() {
         telemetry.addData("Prox: ", intake.intakeFull());
@@ -135,13 +140,13 @@ public class KFC4_Park extends OpMode {
                     currPickupPre = pickup1Pre;
                     currPickup = pickup1;
                     currScore = score1;
+                    follower.followPath(currPickupPre, true);
                     setPathState(4);
                 }
                 break;
             case 4:
                 if (slider.reset()) {
                     slider.clearAction();
-                    follower.followPath(currPickupPre, true);
                     setPathState(5);
                 }
                 break;
@@ -164,13 +169,14 @@ public class KFC4_Park extends OpMode {
                 }
                 break;
             case 7:
-                if (intake.intake() || pathTimer.getElapsedTime() >= 2500) {
+                if (intake.intake() || pathTimer.getElapsedTime() >= 1500) {
                     if (currScore == score3) {
                         follower.followPath(pickup3Post);
                     } else {
                         arm.stow();
                         wrist.wristUp();
                         slider.highBasketScore();
+                        follower.followPath(currScore, true);
                     }
                     intake.stoptake();
                     intake.clearAction();
@@ -178,19 +184,23 @@ public class KFC4_Park extends OpMode {
                 }
                 break;
             case 8:
-                if (!follower.isBusy()) {
-                    if (currScore == score3) {
-                        arm.stow();
-                        wrist.wristUp();
-                        slider.highBasketScore();
+                if (currScore == score3) {
+                    if (!follower.isBusy()) {
+                        if (currScore == score3) {
+                            arm.stow();
+                            wrist.wristUp();
+                            slider.highBasketScore();
+                            follower.followPath(currScore, true);
+                        }
+                        setPathState(9);
                     }
+                } else {
                     setPathState(9);
                 }
                 break;
             case 9:
-                if (slider.highBasketScore()) {
+                if (slider.highBasketScore() && !follower.isBusy()) {
                     slider.clearAction();
-                    follower.followPath(currScore, true);
                     setPathState(10);
                 }
                 break;
@@ -210,9 +220,8 @@ public class KFC4_Park extends OpMode {
                 if (pathTimer.getElapsedTime() >= 3000 || (intake.outake() && pathTimer.getElapsedTime() >= 1000)) {
                     intake.stoptake();
                     intake.clearAction();
-                    slider.reset();
-                    arm.stow();
                     if (currScore != score3) {
+                        arm.stow();
                         if (currScore == score1) {
                             currPickupPre = pickup2Pre;
                             currPickup = pickup2;
@@ -222,10 +231,18 @@ public class KFC4_Park extends OpMode {
                             currPickup = pickup3;
                             currScore = score3;
                         }
+                        follower.followPath(currPickupPre, true);
                         setPathState(4);
                     } else {
-                        setPathState(-1);
+                        follower.followPath(park, true);
+                        setPathState(13);
                     }
+                }
+                break;
+            case 13:
+                if (pathTimer.getElapsedTime() > 350) {
+                    slider.specLoad();
+                    setPathState(-1);
                 }
                 break;
         }

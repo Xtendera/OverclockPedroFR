@@ -16,7 +16,7 @@ public class MConstants {
 
     // Wrist
     public static double wristUp = 0.5;
-    public static double wristLeft = 0.8;
+    public static double wristLeft = 0.83;
 
     // Arm
     public static double armStowed = 0.685;
