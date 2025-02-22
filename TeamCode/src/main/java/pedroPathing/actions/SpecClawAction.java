@@ -9,7 +9,7 @@ public class SpecClawAction {
     private final Servo specClaw;
 
     public SpecClawAction(HardwareMap hardwareMap) {
-        specClaw = hardwareMap.servo.get("claw2");
+        specClaw = hardwareMap.servo.get("specClaw");
 
         specClaw.setPosition(0);
         specClaw.setPosition(0.7);

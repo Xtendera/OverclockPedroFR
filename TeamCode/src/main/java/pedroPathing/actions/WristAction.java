@@ -13,6 +13,10 @@ public class WristAction {
         wrist = hardwareMap.servo.get("wrist");
     }
 
+    public void goTo(double pos) {
+        wrist.setPosition(pos);
+    }
+
     public void wristUp() {
         wrist.setPosition(MConstants.wristUp);
     }

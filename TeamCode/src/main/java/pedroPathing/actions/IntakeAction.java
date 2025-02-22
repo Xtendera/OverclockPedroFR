@@ -12,7 +12,7 @@ public class IntakeAction {
 
     private Action currAction;
     public IntakeAction(HardwareMap hardwareMap) {
-        intake = hardwareMap.get(CRServoImplEx.class, "claw");
+        intake = hardwareMap.get(CRServoImplEx.class, "intake");
         intakeProx = hardwareMap.get(ColorSensor.class,"intakeSwitch");
     }
 

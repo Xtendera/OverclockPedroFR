@@ -10,7 +10,7 @@ public class SliderAction {
     private final DcMotor sliderRightMotor;
     private final DcMotor sliderLeftMotor;
 
-    private final int threshold = 10;
+    private final int threshold = 50;
 
     private Action currAction;
     private double currPosition;
