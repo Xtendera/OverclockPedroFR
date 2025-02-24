@@ -36,7 +36,7 @@ public class SSKFC5 extends OpMode {
     private final Pose startPose = new Pose(8, 112, Math.toRadians(90));
 
     private final Pose scoreControlPose = new Pose(36.6, 116.7);
-    private final Pose scorePose = new Pose(18.65, 124.4, Math.toRadians(135));
+    private final Pose scorePose = new Pose(18.85, 125.4, Math.toRadians(135));
 //    private final Pose scorePose2 = new Pose(18.5, 129, Math.toRadians(135));
 
     private final Pose pickup1PrePose = new Pose(21, 113, Math.toRadians(15));
@@ -199,7 +199,7 @@ public class SSKFC5 extends OpMode {
                 break;
             case 9:
                 if (currScore == score3) {
-                    if (pathTimer.getElapsedTime() >= 1000) {
+                    if (pathTimer.getElapsedTime() >= 500) {
                         follower.followPath(currScore, true);
                         setPathState(10);
                     }
@@ -217,7 +217,7 @@ public class SSKFC5 extends OpMode {
             case 11:
                 if (!follower.isBusy()) {
                     arm.armScore();
-                    intake.outake();
+//                    intake.outake();
                     setPathState(12);
                 }
                 break;

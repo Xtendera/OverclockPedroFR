@@ -9,7 +9,7 @@ public class MConstants {
     public static double ticksPerMM = ticksPerOutputRev/spoolCircumference;
 
     public static double sliderReset = 0d;
-    public static double highChamberLoad = 397-70*ticksPerMM;
+    public static double highChamberLoad = 510-70*ticksPerMM;
     public static double highChamberScore = 397-110*ticksPerMM;
     public static double specLoad = 510-70*ticksPerMM;
 //    public static double highBasketScore = 802*ticksPerMM;
@@ -17,6 +17,8 @@ public class MConstants {
     // Wrist
     public static double wristUp = 0.68d;
     public static double wristStrafe = 0.95d;
+
+    public static double wristSpecStrafe = -0.95d;
     public static double wristLeft = 1d;
 
     // Arm
@@ -25,8 +27,8 @@ public class MConstants {
     public static double armScore = 0.45; // 0.6
 
     // Spec Claw
-    public static double specClawClosed = 0.7;
-    public static double specClawOpen = 0.27;
+    public static double specClawClosed = 0.27;
+    public static double specClawOpen = 0.7;
 
     // Extendo
 
