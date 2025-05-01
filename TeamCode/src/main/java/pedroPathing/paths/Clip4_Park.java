@@ -20,6 +20,7 @@ import pedroPathing.actions.ExtendoAction;
 import pedroPathing.actions.IntakeAction;
 import pedroPathing.actions.SliderAction;
 import pedroPathing.actions.SpecClawAction;
+import pedroPathing.actions.SweeperAction;
 import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
@@ -43,6 +44,7 @@ public class Clip4_Park extends OpMode {
     private SpecClawAction specClaw;
     private ExtendoAction extendo;
     private IntakeAction intake;
+    private SweeperAction sweeper;
 
     /** Start Pose of our robot */
     private final Pose startPose = new Pose(8, 64, Math.toRadians(0));
@@ -54,9 +56,9 @@ public class Clip4_Park extends OpMode {
 
     private final Pose scorePose = new Pose(38, 69, Math.toRadians(0));
 
-    private final Pose pickup1PrePose = new Pose(21, 31, Math.toRadians(345));
-    private final Pose pickup1Pose = new Pose(21, 28, Math.toRadians(345));
-    private final Pose pickup1Dep = new Pose(21, 28, Math.toRadians(255));
+    private final Pose pickup1PrePose = new Pose(21, 35, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(58, 35, Math.toRadians(0));
+    private final Pose pickup1Dep = new Pose(10, 32, Math.toRadians(270));
 
     private final Pose pickup2PrePose = new Pose(21, 26, Math.toRadians(345));
     private final Pose pickup2Pose = new Pose(21, 23, Math.toRadians(345));
@@ -91,16 +93,16 @@ public class Clip4_Park extends OpMode {
         scorePreload.setConstantInterpolation(startPose.getHeading()); */
         pickup1Pre = follower.pathBuilder()
                 .addBezierLine(new Point(scorePose), new Point(pickup1PrePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1PrePose.getHeading())
+                .setConstantHeadingInterpolation(pickup1PrePose.getHeading())
                 .build();
 
         pickup1 = follower.pathBuilder()
                 .addBezierLine(new Point(pickup1PrePose), new Point(pickup1Pose))
-                .setConstantHeadingInterpolation(pickup1PrePose.getHeading())
+                .setLinearHeadingInterpolation(pickup1PrePose.getHeading(), pickup1Pose.getHeading())
                 .build();
         dep1 = follower.pathBuilder()
                 .addBezierLine(new Point(pickup1Pose), new Point(pickup1Dep))
-                .setLinearHeadingInterpolation(pickup1Pose.getHeading(), pickup1Dep.getHeading())
+                .setConstantHeadingInterpolation(pickup1Dep.getHeading())
                 .build();
 
         pickup2Pre = follower.pathBuilder()
@@ -172,18 +174,19 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 3:
-                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 350) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 500) {
                     slider.clearAction();
-                    specClaw.openClaw();
                     setPathState(4);
                 }
                 break;
             case 4:
-                if (pathTimer.getElapsedTime() > 150) {
-                    follower.followPath(prePickups.get(loopState), true);
+                if (pathTimer.getElapsedTime() > 250) {
+                    follower.followPath(prePickups.get(loopState), false);
+                    sweeper.setPosition(MConstants.flipperOut);
+                    specClaw.openClaw();
                     slider.reset();
-                    extendo.goTo(MConstants.extendoOut);
-                    wrist.goTo(MConstants.wristSpecStrafe);
+//                    extendo.goTo(MConstants.extendoOut);
+//                    wrist.goTo(MConstants.wristSpecStrafe);
                     setPathState(5);
                 }
                 break;
@@ -195,30 +198,24 @@ public class Clip4_Park extends OpMode {
                 break;
             case 6:
                 if (!follower.isBusy()) {
-                    arm.armPickup();
-                    intake.intake();
+//                    arm.armPickup();
+//                    intake.intake();
                     setPathState(7);
                 }
                 break;
             case 7:
-                if (pathTimer.getElapsedTime() >= 500) {
-                    follower.followPath(pickups.get(loopState), true);
-                    setPathState(8);
-                }
+                follower.followPath(pickups.get(loopState), false);
+                setPathState(8);
                 break;
             case 8:
-                if (intake.intake() || pathTimer.getElapsedTime() >= 1500) {
+                if (!follower.isBusy()) {
 //                    follower.followPath(pickup3Post);
                     follower.followPath(deps.get(loopState));
-                    arm.stow();
-                    intake.stoptake();
-                    intake.clearAction();
                     setPathState(9);
                 }
                 break;
             case 9:
                 if (!follower.isBusy()) {
-                    intake.outake();
                     if (loopState == 3) {
                         setPathState(-1);
                     } else {
@@ -306,6 +303,7 @@ public class Clip4_Park extends OpMode {
         arm = new ArmAction(hardwareMap);
         extendo = new ExtendoAction(hardwareMap);
         intake = new IntakeAction(hardwareMap);
+        sweeper = new SweeperAction(hardwareMap);
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);

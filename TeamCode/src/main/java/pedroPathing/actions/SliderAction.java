@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import pedroPathing.constants.MConstants;
 
 public class SliderAction {
-    private final DcMotor sliderRightMotor;
-    private final DcMotor sliderLeftMotor;
+    public final DcMotor sliderRightMotor;
+    public final DcMotor sliderLeftMotor;
 
     private final int threshold = 50;
 

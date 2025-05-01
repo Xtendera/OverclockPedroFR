@@ -12,7 +12,7 @@ public class SpecClawAction {
         specClaw = hardwareMap.servo.get("specClaw");
 
         specClaw.setPosition(0);
-        specClaw.setPosition(0.7);
+        specClaw.setPosition(0.27);
     }
 
     public boolean openClaw() {
