@@ -56,27 +56,24 @@ public class Clip4_Park extends OpMode {
 
     private final Pose scorePose = new Pose(38, 69, Math.toRadians(0));
 
-    private final Pose pickup1PrePose = new Pose(21, 35, Math.toRadians(0));
-    private final Pose pickup1Pose = new Pose(58, 35, Math.toRadians(0));
+    private final Pose pickup1Pose = new Pose(58, 35, Math.toRadians(270));
+    private final Pose pickup1Control = new Pose(14.2, 31.7);
     private final Pose pickup1Dep = new Pose(10, 32, Math.toRadians(270));
 
-    private final Pose pickup2PrePose = new Pose(21, 26, Math.toRadians(345));
-    private final Pose pickup2Pose = new Pose(21, 23, Math.toRadians(345));
-    private final Pose pickup2Dep = new Pose(21, 29, Math.toRadians(255));
+    private final Pose pickup2Pose = new Pose(58, 25, Math.toRadians(270));
+    private final Pose pickup2Dep = new Pose(10, 24,  Math.toRadians(270));
 
-    private final Pose pickup3PrePose = new Pose(45, 32, Math.toRadians(270));
-    private final Pose pickup3Pose = new Pose(45, 29, Math.toRadians(270));
-    private final Pose pickup3Dep = new Pose(12.8, 10);
+    private final Pose pickup3Pose = new Pose(58, 19, Math.toRadians(270));
+    private final Pose pickup3Dep = new Pose(10, 16, Math.toRadians(270));
 
     private final Pose specCollectPose = new Pose(8.3, 18, Math.toRadians(180));
     private final Pose specSlidePose = new Pose(8.3, 28, Math.toRadians(180));
     
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
-    private PathChain scorePreload, pickup1Pre, pickup1, dep1, pickup2Pre, pickup2, dep2, pickup3Pre, pickup3, dep3;
+    private PathChain scorePreload, pickup1, dep1, pickup2, dep2, pickup3, dep3;
 
 
-    private List<PathChain> prePickups = new ArrayList<PathChain>();
     private List<PathChain> pickups = new ArrayList<PathChain>();
 
     private List<PathChain> deps = new ArrayList<PathChain>();
@@ -91,28 +88,19 @@ public class Clip4_Park extends OpMode {
                 .build();
         /* Here is an example for Constant Interpolation
         scorePreload.setConstantInterpolation(startPose.getHeading()); */
-        pickup1Pre = follower.pathBuilder()
-                .addBezierLine(new Point(scorePose), new Point(pickup1PrePose))
-                .setConstantHeadingInterpolation(pickup1PrePose.getHeading())
-                .build();
-
         pickup1 = follower.pathBuilder()
-                .addBezierLine(new Point(pickup1PrePose), new Point(pickup1Pose))
-                .setLinearHeadingInterpolation(pickup1PrePose.getHeading(), pickup1Pose.getHeading())
+                .addBezierCurve(new Point(scorePose), new Point(pickup1Control), new Point(pickup1Pose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose.getHeading())
                 .build();
         dep1 = follower.pathBuilder()
                 .addBezierLine(new Point(pickup1Pose), new Point(pickup1Dep))
-                .setConstantHeadingInterpolation(pickup1Dep.getHeading())
+                .setLinearHeadingInterpolation(pickup1Pose.getHeading(), pickup1Dep.getHeading())
                 .build();
 
-        pickup2Pre = follower.pathBuilder()
-                .addBezierLine(new Point(pickup1Dep), new Point(pickup2PrePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup2PrePose.getHeading())
-                .build();
 
         pickup2 = follower.pathBuilder()
-                .addBezierLine(new Point(pickup2PrePose), new Point(pickup2Pose))
-                .setConstantHeadingInterpolation(pickup2PrePose.getHeading())
+                .addBezierLine(new Point(pickup1Dep), new Point(pickup2Pose))
+                .setLinearHeadingInterpolation(pickup1Dep.getHeading(), pickup2Pose.getHeading())
                 .build();
 
         dep2 = follower.pathBuilder()
@@ -120,13 +108,9 @@ public class Clip4_Park extends OpMode {
                 .setLinearHeadingInterpolation(pickup2Pose.getHeading(), pickup2Dep.getHeading())
                 .build();
 
-        pickup3Pre = follower.pathBuilder()
-                .addBezierLine(new Point(pickup2Dep), new Point(pickup3PrePose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup3PrePose.getHeading())
-                .build();
         pickup3 = follower.pathBuilder()
-                .addBezierLine(new Point(pickup3PrePose), new Point(pickup3Pose))
-                .setConstantHeadingInterpolation(pickup3PrePose.getHeading())
+                .addBezierLine(new Point(pickup2Dep), new Point(pickup3Pose))
+                .setLinearHeadingInterpolation(pickup2Dep.getHeading(), pickup3Pose.getHeading())
                 .build();
 
         dep3 = follower.pathBuilder()
@@ -134,9 +118,6 @@ public class Clip4_Park extends OpMode {
                 .setLinearHeadingInterpolation(pickup3Pose.getHeading(), pickup3Dep.getHeading())
                 .build();
 
-        prePickups.add(pickup1Pre);
-        prePickups.add(pickup2Pre);
-        prePickups.add(pickup3Pre);
 
         pickups.add(pickup1);
         pickups.add(pickup2);
@@ -174,48 +155,37 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 3:
-                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 500) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 700) {
                     slider.clearAction();
+                    specClaw.openClaw();
+                    slider.reset();
                     setPathState(4);
                 }
                 break;
             case 4:
-                if (pathTimer.getElapsedTime() > 250) {
-                    follower.followPath(prePickups.get(loopState), false);
-                    sweeper.setPosition(MConstants.flipperOut);
-                    specClaw.openClaw();
-                    slider.reset();
-//                    extendo.goTo(MConstants.extendoOut);
-//                    wrist.goTo(MConstants.wristSpecStrafe);
+                if (slider.reset()) {
+                    slider.clearAction();
+                    follower.followPath(pickups.get(loopState), false);
                     setPathState(5);
                 }
                 break;
             case 5:
-                if (slider.reset()) {
-                    slider.clearAction();
+                if (pathTimer.getElapsedTime() >= 450) {
+                    sweeper.setPosition(MConstants.flipperIn);
                     setPathState(6);
                 }
                 break;
             case 6:
                 if (!follower.isBusy()) {
-//                    arm.armPickup();
-//                    intake.intake();
+//                    follower.followPath(pickup3Post);
+                    sweeper.setPosition(MConstants.flipperOut);
+                    follower.followPath(deps.get(loopState));
                     setPathState(7);
                 }
                 break;
             case 7:
-                follower.followPath(pickups.get(loopState), false);
-                setPathState(8);
-                break;
-            case 8:
                 if (!follower.isBusy()) {
-//                    follower.followPath(pickup3Post);
-                    follower.followPath(deps.get(loopState));
-                    setPathState(9);
-                }
-                break;
-            case 9:
-                if (!follower.isBusy()) {
+                    loopState++;
                     if (loopState == 3) {
                         setPathState(-1);
                     } else {

@@ -32,11 +32,11 @@ public class MConstants {
 
     // Extendo
 
-    public static double extendoScore = 0.22d;
+    public static double extendoScore = 0.7d;
     public static double extendoOut = 0.33d;
     public static double extendoIn = 0.8d;
 
     // Sweeper
-    public static double flipperOut = .7;
-    public static double flipperIn = .98;
+    public static double flipperOut = .7d;
+    public static double flipperIn = .98d;
 }

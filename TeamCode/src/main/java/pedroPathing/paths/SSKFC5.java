@@ -130,7 +130,7 @@ public class SSKFC5 extends OpMode {
                 if (!follower.isBusy() && slider.highBasketScore()) {
                     slider.clearAction();
                     arm.armScore();
-//                    intake.outake();
+                    intake.outake();
                     setPathState(2);
                 }
                 break;
@@ -151,7 +151,6 @@ public class SSKFC5 extends OpMode {
             case 4:
                 if (pathTimer.getElapsedTime() >= 500) {
                     slider.reset();
-                    extendo.goTo(MConstants.extendoOut);
                     wrist.goTo(MConstants.wristStrafe);
                     currPickupPre = pickup1Pre;
                     currPickup = pickup1;
@@ -161,19 +160,14 @@ public class SSKFC5 extends OpMode {
                 }
                 break;
             case 5:
-                if (slider.reset()) {
-                    slider.clearAction();
+                if (pathTimer.getElapsedTime() >= 350) {
+                    extendo.goTo(MConstants.extendoOut);
                     setPathState(6);
                 }
                 break;
             case 6:
-                if (!follower.isBusy()) {
-//                    wrist.wristUp();
-//                    if (currScore == score3) {
-//                        wrist.wristUp();
-//                    } else {
-//                        wrist.wristLeft();
-//                    }
+                if (!follower.isBusy() && slider.reset()) {
+                    slider.clearAction();
                     arm.armPickup();
                     intake.intake();
                     setPathState(7);
@@ -237,7 +231,7 @@ public class SSKFC5 extends OpMode {
                         wrist.goTo(MConstants.wristStrafe);
                     }
                     if (currScore != score3) {
-                        extendo.goTo(MConstants.extendoOut);
+                        slider.reset();
                         arm.stow();
                         if (currScore == score1) {
                             currPickupPre = pickup2Pre;
@@ -253,6 +247,7 @@ public class SSKFC5 extends OpMode {
                     } else {
 //                        follower.followPath(park, true);
                         extendo.goTo(MConstants.extendoIn);
+                        slider.reset();
                         arm.stow();
                         setPathState(99);
                     }
