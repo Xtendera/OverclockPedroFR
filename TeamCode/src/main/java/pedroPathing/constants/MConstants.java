@@ -37,6 +37,6 @@ public class MConstants {
     public static double extendoIn = 0.8d;
 
     // Sweeper
-    public static double flipperOut = .7d;
+    public static double flipperOut = .75d;
     public static double flipperIn = .98d;
 }

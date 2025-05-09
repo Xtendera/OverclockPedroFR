@@ -37,6 +37,7 @@ public class Clip4_Park extends OpMode {
     private int pathState;
 
     private int loopState = 0;
+    private int clipState = 0;
 
     private SliderAction slider;
     private WristAction wrist;
@@ -58,25 +59,38 @@ public class Clip4_Park extends OpMode {
 
     private final Pose pickup1Pose = new Pose(58, 35, Math.toRadians(270));
     private final Pose pickup1Control = new Pose(14.2, 31.7);
-    private final Pose pickup1Dep = new Pose(10, 32, Math.toRadians(270));
+    private final Pose pickup1Dep = new Pose(8.5, 34, Math.toRadians(270));
 
-    private final Pose pickup2Pose = new Pose(58, 25, Math.toRadians(270));
-    private final Pose pickup2Dep = new Pose(10, 24,  Math.toRadians(270));
+    private final Pose pickup2Pose = new Pose(58, 26, Math.toRadians(270));
+    private final Pose pickup2Control = new Pose(18.3, 43.2);
+    private final Pose pickup2Dep = new Pose(8.5, 25,  Math.toRadians(270));
 
-    private final Pose pickup3Pose = new Pose(58, 19, Math.toRadians(270));
-    private final Pose pickup3Dep = new Pose(10, 16, Math.toRadians(270));
+    private final Pose pickup3Pose = new Pose(58, 18, Math.toRadians(270));
+    private final Pose pickup3Dep = new Pose(8.5, 18, Math.toRadians(270));
 
-    private final Pose specCollectPose = new Pose(8.3, 18, Math.toRadians(180));
-    private final Pose specSlidePose = new Pose(8.3, 28, Math.toRadians(180));
+//    private final Pose depBack = new Pose(30, 16, Math.toRadians(225));
+    private final Pose depBack = new Pose(25, 29, Math.toRadians(225));
+
+    private final Pose collectPose = new Pose(8.7, 33, Math.toRadians(180));
+    private final Pose slidePose = new Pose(8.7, 37, Math.toRadians(180));
+    private final Pose clip1Pose = new Pose(38, 70.5, Math.toRadians(0));
+    private final Pose clip2Pose = new Pose(38, 72, Math.toRadians(0));
+    private final Pose clip3Pose = new Pose(38, 73.5, Math.toRadians(0));
+
     
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
-    private PathChain scorePreload, pickup1, dep1, pickup2, dep2, pickup3, dep3;
+    private PathChain scorePreload, pickup1, dep1, pickup2, dep2, pickup3, dep3, depSpecBack, slide, collect1, clip1, collect2, clip2, collect3, clip3;
 
 
+    private List<Pose> pushPoses = new ArrayList<Pose>();
+    private List<Pose> depPoses = new ArrayList<Pose>();
     private List<PathChain> pickups = new ArrayList<PathChain>();
 
     private List<PathChain> deps = new ArrayList<PathChain>();
+
+    private List<PathChain> collects = new ArrayList<PathChain>();
+    private List<PathChain> clips = new ArrayList<PathChain>();
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
     public void buildPaths() {
@@ -99,7 +113,7 @@ public class Clip4_Park extends OpMode {
 
 
         pickup2 = follower.pathBuilder()
-                .addBezierLine(new Point(pickup1Dep), new Point(pickup2Pose))
+                .addBezierCurve(new Point(pickup1Dep), new Point(pickup2Control),new Point(pickup2Pose))
                 .setLinearHeadingInterpolation(pickup1Dep.getHeading(), pickup2Pose.getHeading())
                 .build();
 
@@ -118,6 +132,51 @@ public class Clip4_Park extends OpMode {
                 .setLinearHeadingInterpolation(pickup3Pose.getHeading(), pickup3Dep.getHeading())
                 .build();
 
+        depSpecBack = follower.pathBuilder()
+                .addBezierLine(new Point(pickup3Dep), new Point(depBack))
+                .setLinearHeadingInterpolation(pickup3Dep.getHeading(), depBack.getHeading())
+                .build();
+
+        slide = follower.pathBuilder()
+                .addBezierLine(new Point(collectPose), new Point(slidePose))
+                .setConstantHeadingInterpolation(slidePose.getHeading())
+                .build();
+
+        collect1 = follower.pathBuilder()
+                .addBezierLine(new Point(depBack), new Point(collectPose))
+                .setLinearHeadingInterpolation(depBack.getHeading(), collectPose.getHeading())
+                .build();
+
+
+        collect2 = follower.pathBuilder()
+                .addBezierLine(new Point(clip1Pose), new Point(collectPose))
+                .setLinearHeadingInterpolation(clip1Pose.getHeading(), collectPose.getHeading())
+                .build();
+        collect3 = follower.pathBuilder()
+                .addBezierLine(new Point(clip2Pose), new Point(collectPose))
+                .setLinearHeadingInterpolation(clip2Pose.getHeading(), collectPose.getHeading())
+                .build();
+
+        clip1 = follower.pathBuilder()
+                .addBezierLine(new Point(slidePose), new Point(clip1Pose))
+                .setLinearHeadingInterpolation(slidePose.getHeading(), clip1Pose.getHeading())
+                .build();
+        clip2 = follower.pathBuilder()
+                .addBezierLine(new Point(slidePose), new Point(clip2Pose))
+                .setLinearHeadingInterpolation(slidePose.getHeading(), clip2Pose.getHeading())
+                .build();
+        clip3 = follower.pathBuilder()
+                .addBezierLine(new Point(slidePose), new Point(clip3Pose))
+                .setLinearHeadingInterpolation(slidePose.getHeading(), clip3Pose.getHeading())
+                .build();
+
+        pushPoses.add(pickup1Pose);
+        pushPoses.add(pickup2Pose);
+        pushPoses.add(pickup3Pose);
+
+        depPoses.add(pickup1Dep);
+        depPoses.add(pickup2Dep);
+        depPoses.add(pickup3Dep);
 
         pickups.add(pickup1);
         pickups.add(pickup2);
@@ -126,6 +185,14 @@ public class Clip4_Park extends OpMode {
         deps.add(dep1);
         deps.add(dep2);
         deps.add(dep3);
+
+        collects.add(collect1);
+        collects.add(collect2);
+        collects.add(collect3);
+
+        clips.add(clip1);
+        clips.add(clip2);
+        clips.add(clip3);
     }
 
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
@@ -142,20 +209,20 @@ public class Clip4_Park extends OpMode {
                 break;
             case 1:
                 /**Go to clipping position IF not moving already (which it shouldn't (but just in case))**/
-                if (slider.highChamberLoad() && !follower.isBusy()) {
+                if (slider.highChamberLoad() && (Math.abs(scorePose.getX() - follower.getPose().getX()) <= 3.0f && Math.abs(scorePose.getY() - follower.getPose().getY()) <= 3.0f)) {
                     slider.clearAction();
                     setPathState(2);
                 }
                 break;
             case 2:
                 /**Go down to clip the clip**/
-                if (!follower.isBusy()) {
+                if (true) {
                     slider.highChamberScore();
                     setPathState(3);
                 }
                 break;
             case 3:
-                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 700) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 450) {
                     slider.clearAction();
                     specClaw.openClaw();
                     slider.reset();
@@ -170,26 +237,83 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 5:
-                if (pathTimer.getElapsedTime() >= 450) {
+                if (pathTimer.getElapsedTime() >= 400) {
                     sweeper.setPosition(MConstants.flipperIn);
                     setPathState(6);
                 }
                 break;
             case 6:
-                if (!follower.isBusy()) {
-//                    follower.followPath(pickup3Post);
+                if (Math.abs(pushPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.0f && Math.abs(pushPoses.get(loopState).getY() - follower.getPose().getY()) <= 3.0f) {
+//                    follower.followPath(pickup3Post);depPoses
                     sweeper.setPosition(MConstants.flipperOut);
                     follower.followPath(deps.get(loopState));
                     setPathState(7);
                 }
                 break;
             case 7:
-                if (!follower.isBusy()) {
+                if (Math.abs(depPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.5f && Math.abs(depPoses.get(loopState).getY() - follower.getPose().getY()) <= 3.5f) {
                     loopState++;
-                    if (loopState == 3) {
-                        setPathState(-1);
+                    if (loopState == 2) {
+                        setPathState(8);
                     } else {
                         setPathState(4);
+                    }
+                }
+                break;
+            case 8:
+                follower.followPath(depSpecBack, false);
+                setPathState(9);
+            case 9:
+                if (!follower.isBusy()) {
+                    sweeper.setPosition(MConstants.flipperIn);
+                    specClaw.openClaw();
+                    follower.followPath(collects.get(clipState));
+                    setPathState(10);
+                }
+                break;
+            case 10:
+                if (!follower.isBusy()) {
+                    follower.followPath(slide, 0.75, true);
+                    setPathState(11);
+                }
+                break;
+            case 11:
+                if (!follower.isBusy()) {
+                    specClaw.closeClaw();
+                    setPathState(12);
+                }
+                break;
+            case 12:
+                if (pathTimer.getElapsedTime() >= 200) {
+                    slider.highChamberLoad();
+                    follower.followPath(clips.get(clipState), true);
+                    setPathState(13);
+                }
+                break;
+            case 13:
+                if (!follower.isBusy() && slider.highChamberLoad()) {
+                    slider.clearAction();
+                    slider.highChamberScore();
+                    setPathState(14);
+                }
+                break;
+            case 14:
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 450) {
+                    slider.clearAction();
+                    specClaw.openClaw();
+                    slider.reset();
+                    setPathState(15);
+                }
+                break;
+            case 15:
+                if (slider.reset()) {
+                    slider.clearAction();
+//                    follower.followPath(pickups.get(loopState), false);
+                    if (clipState == 2) {
+                        setPathState(16);
+                    } else {
+                        clipState++;
+                        setPathState(9);
                     }
                 }
                 break;
