@@ -18,7 +18,7 @@ import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
 
-@Autonomous(name = "Push3", group = "AAA")
+//@Autonomous(name = "Push3", group = "AAA")
 public class Push3 extends OpMode {
 
     private Follower follower;

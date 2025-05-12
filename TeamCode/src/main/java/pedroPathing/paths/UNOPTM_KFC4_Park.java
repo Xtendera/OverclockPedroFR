@@ -17,7 +17,7 @@ import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
 
-@Autonomous(name = "UNOPTM_KFC4_Park", group = "AAA")
+//@Autonomous(name = "UNOPTM_KFC4_Park", group = "AAA")
 public class UNOPTM_KFC4_Park extends OpMode {
     private Follower follower;
 

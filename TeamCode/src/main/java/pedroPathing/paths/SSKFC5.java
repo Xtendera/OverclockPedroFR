@@ -9,11 +9,15 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import pedroPathing.actions.ArmAction;
 import pedroPathing.actions.ExtendoAction;
 import pedroPathing.actions.IntakeAction;
 import pedroPathing.actions.SliderAction;
 import pedroPathing.actions.SpecClawAction;
+import pedroPathing.actions.SweeperAction;
 import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
@@ -32,6 +36,9 @@ public class SSKFC5 extends OpMode {
     private SpecClawAction specClaw;
 
     private ExtendoAction extendo;
+    private SweeperAction sweeper;
+
+    private int subIndex = 0;
 
     private final Pose startPose = new Pose(8, 112, Math.toRadians(90));
 
@@ -52,10 +59,18 @@ public class SSKFC5 extends OpMode {
     private final Pose parkControlPose = new Pose(83, 135);
     private final Pose parkPose = new Pose(63, 98, Math.toRadians(270));
 
+    private final Pose sub1Pose1 = new Pose(60, 98, Math.toRadians(270));
+    private final Pose sub1Control = new Pose(83, 135);
+    private final Pose sub1Pose2 = new Pose(60, 98, Math.toRadians(260));
+    private final Pose sub1Pose3 = new Pose(60, 98, Math.toRadians(285));
+    private final Pose sub1Pose4 = new Pose(60, 98, Math.toRadians(300));
+
     private int pathState;
-    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3, park;
+    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3, park, sub1P1, sub1P2, sub1P3, sub1P4;
 
     private PathChain currPickupPre, currPickup, currScore;
+
+    private List<PathChain> subs = new ArrayList<PathChain>();
 
     private void buildPaths() {
         scorePreload = follower.pathBuilder()
@@ -116,6 +131,27 @@ public class SSKFC5 extends OpMode {
                 .addBezierCurve(new Point(scorePose), new Point(parkControlPose), new Point(parkPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
                 .build();
+
+        sub1P1 = follower.pathBuilder()
+                .addBezierCurve(new Point(scorePose), new Point(sub1Control), new Point(sub1Pose1))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), sub1Pose1.getHeading())
+                .build();
+        sub1P2 = follower.pathBuilder()
+                .addBezierLine(new Point(sub1Pose1), new Point(sub1Pose2))
+                .setLinearHeadingInterpolation(sub1Pose1.getHeading(), sub1Pose2.getHeading())
+                .build();
+        sub1P3 = follower.pathBuilder()
+                .addBezierLine(new Point(sub1Pose2), new Point(sub1Pose3))
+                .setLinearHeadingInterpolation(sub1Pose2.getHeading(), sub1Pose3.getHeading())
+                .build();
+        sub1P4 = follower.pathBuilder()
+                .addBezierLine(new Point(sub1Pose3), new Point(sub1Pose4))
+                .setLinearHeadingInterpolation(sub1Pose3.getHeading(), sub1Pose4.getHeading())
+                .build();
+
+        subs.add(sub1P2);
+        subs.add(sub1P3);
+        subs.add(sub1P4);
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
@@ -249,20 +285,45 @@ public class SSKFC5 extends OpMode {
                         extendo.goTo(MConstants.extendoIn);
                         slider.reset();
                         arm.stow();
-                        setPathState(99);
+                        setPathState(14);
                     }
                 }
                 break;
             case 14:
-                if (pathTimer.getElapsedTime() > 350) {
-                    slider.specLoad();
-                    setPathState(-1);
+                if (pathTimer.getElapsedTime() >= 350) {
+                    follower.followPath(sub1P1, false);
+                    setPathState(15);
                 }
                 break;
-            case 99:
-                if (pathTimer.getElapsedTime() >= 350) {
-                    slider.reset();
+            case 15:
+                if (!follower.isBusy()) {
+                    sweeper.setPosition(MConstants.flipperOut - 0.05f);
+                    setPathState(16);
                 }
+                break;
+            case 16:
+                if (pathTimer.getElapsedTime() >= 250) {
+                    wrist.wristUp();
+                    sweeper.setPosition(MConstants.flipperIn);
+                    extendo.goTo(MConstants.extendoScore);
+                    setPathState(17);
+                }
+                break;
+            case 17:
+                if (pathTimer.getElapsedTime() >= 350) {
+                    intake.intake(true);
+                    arm.armPickup();
+                    extendo.goTo(MConstants.extendoOut);
+                    setPathState(18);
+                }
+                break;
+            case 18:
+                if (intake.intake(true) || pathTimer.getElapsedTime() > 1100) {
+                    intake.stoptake();
+                    arm.stow();
+                    extendo.goTo(MConstants.extendoIn);
+                }
+                break;
         }
     }
 
@@ -278,6 +339,7 @@ public class SSKFC5 extends OpMode {
         arm = new ArmAction(hardwareMap);
         intake = new IntakeAction(hardwareMap);
         extendo = new ExtendoAction(hardwareMap);
+        sweeper = new SweeperAction(hardwareMap);
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);

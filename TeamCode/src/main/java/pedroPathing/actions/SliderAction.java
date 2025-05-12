@@ -18,6 +18,9 @@ public class SliderAction {
         sliderRightMotor = hardwareMap.dcMotor.get("slideRightMotor");
         sliderLeftMotor = hardwareMap.dcMotor.get("slideLeftMotor");
         sliderLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        sliderLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        sliderRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void clearAction() {

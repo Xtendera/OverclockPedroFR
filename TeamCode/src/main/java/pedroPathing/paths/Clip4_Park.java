@@ -57,9 +57,9 @@ public class Clip4_Park extends OpMode {
 
     private final Pose scorePose = new Pose(38, 69, Math.toRadians(0));
 
-    private final Pose pickup1Pose = new Pose(58, 35, Math.toRadians(270));
+    private final Pose pickup1Pose = new Pose(58, 32, Math.toRadians(270));
     private final Pose pickup1Control = new Pose(14.2, 31.7);
-    private final Pose pickup1Dep = new Pose(8.5, 34, Math.toRadians(270));
+    private final Pose pickup1Dep = new Pose(8.5, 31, Math.toRadians(270));
 
     private final Pose pickup2Pose = new Pose(58, 26, Math.toRadians(270));
     private final Pose pickup2Control = new Pose(18.3, 43.2);
@@ -69,10 +69,10 @@ public class Clip4_Park extends OpMode {
     private final Pose pickup3Dep = new Pose(8.5, 18, Math.toRadians(270));
 
 //    private final Pose depBack = new Pose(30, 16, Math.toRadians(225));
-    private final Pose depBack = new Pose(25, 29, Math.toRadians(225));
+    private final Pose depBack = new Pose(20, 29, Math.toRadians(225));
 
-    private final Pose collectPose = new Pose(8.7, 33, Math.toRadians(180));
-    private final Pose slidePose = new Pose(8.7, 37, Math.toRadians(180));
+    private final Pose collectPose = new Pose(8.7, 27, Math.toRadians(180));
+    private final Pose slidePose = new Pose(8.7, 35, Math.toRadians(180));
     private final Pose clip1Pose = new Pose(38, 70.5, Math.toRadians(0));
     private final Pose clip2Pose = new Pose(38, 72, Math.toRadians(0));
     private final Pose clip3Pose = new Pose(38, 73.5, Math.toRadians(0));
@@ -202,6 +202,8 @@ public class Clip4_Park extends OpMode {
         switch (pathState) {
             case 0:
                 /**Raise Slide**/
+                extendo.goTo(MConstants.extendoIn);
+                arm.stow();
                 wrist.wristUp();
                 slider.highChamberLoad();
                 follower.followPath(scorePreload, true);
@@ -209,7 +211,7 @@ public class Clip4_Park extends OpMode {
                 break;
             case 1:
                 /**Go to clipping position IF not moving already (which it shouldn't (but just in case))**/
-                if (slider.highChamberLoad() && (Math.abs(scorePose.getX() - follower.getPose().getX()) <= 3.0f && Math.abs(scorePose.getY() - follower.getPose().getY()) <= 3.0f)) {
+                if (slider.highChamberLoad() && (Math.abs(scorePose.getX() - follower.getPose().getX()) <= 2.5f && Math.abs(scorePose.getY() - follower.getPose().getY()) <= 2.5f)) {
                     slider.clearAction();
                     setPathState(2);
                 }
@@ -222,7 +224,7 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 3:
-                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 450) {
+                if (slider.highChamberScore() && pathTimer.getElapsedTime() > 500) {
                     slider.clearAction();
                     specClaw.openClaw();
                     slider.reset();
@@ -243,7 +245,7 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 6:
-                if (Math.abs(pushPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.0f && Math.abs(pushPoses.get(loopState).getY() - follower.getPose().getY()) <= 3.0f) {
+                if (Math.abs(pushPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.0f && Math.abs(pushPoses.get(loopState).getY() - follower.getPose().getY()) <= 1.0f) {
 //                    follower.followPath(pickup3Post);depPoses
                     sweeper.setPosition(MConstants.flipperOut);
                     follower.followPath(deps.get(loopState));
@@ -251,7 +253,7 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 7:
-                if (Math.abs(depPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.5f && Math.abs(depPoses.get(loopState).getY() - follower.getPose().getY()) <= 3.5f) {
+                if (Math.abs(depPoses.get(loopState).getX() - follower.getPose().getX()) <= 3.5f && Math.abs(depPoses.get(loopState).getY() - follower.getPose().getY()) <= 2.0f) {
                     loopState++;
                     if (loopState == 2) {
                         setPathState(8);
@@ -272,7 +274,7 @@ public class Clip4_Park extends OpMode {
                 }
                 break;
             case 10:
-                if (!follower.isBusy()) {
+                if (Math.abs(collectPose.getX() - follower.getPose().getX()) <= 2.0f && Math.abs(collectPose.getY() - follower.getPose().getY()) <= 2.0f) {
                     follower.followPath(slide, 0.75, true);
                     setPathState(11);
                 }
