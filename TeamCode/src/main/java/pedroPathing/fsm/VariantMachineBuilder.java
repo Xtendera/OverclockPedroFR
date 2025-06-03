@@ -16,7 +16,6 @@ public class VariantMachineBuilder {
         states.get(states.size() - 1).condition = cond;
         return this;
     }
-
     public VariantMachineBuilder setSwitch(Condition cond) {
         states.get(states.size() - 1).conditionType = VariantState.ConditionTypes.SWITCH;
         states.get(states.size() - 1).condition = cond;
@@ -39,6 +38,15 @@ public class VariantMachineBuilder {
     }
 
     public VariantMachine build() {
+        int defaults = 0;
+        for (VariantState state : states) {
+            if (state.isDefault) defaults++;
+        }
+        if (defaults > 1) {
+            throw new IllegalStateException("No more than one default state may be initialized!");
+        } else if (defaults == 0) {
+            throw new IllegalStateException("One default state is required!");
+        }
         return new VariantMachine(states);
     }
 }
