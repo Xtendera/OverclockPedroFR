@@ -1,7 +1,6 @@
 package pedroPathing.teleop;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.localization.GoBildaPinpointDriver;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Constants;
@@ -9,10 +8,6 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.sfdev.assembly.state.StateMachine;
-import com.sfdev.assembly.state.StateMachineBuilder;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import pedroPathing.actions.ArmAction;
 import pedroPathing.actions.ExtendoAction;
@@ -22,6 +17,9 @@ import pedroPathing.actions.SpecClawAction;
 import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
+import pedroPathing.constants.MConstants;
+import pedroPathing.fsm.VariantMachine;
+import pedroPathing.fsm.VariantMachineBuilder;
 
 /**
  * This is an example teleop that showcases movement and robot-centric driving.
@@ -46,11 +44,29 @@ public class TeleV1 extends OpMode {
 
     private ExtendoAction extendo;
 
-    StateMachine sliderMachine;
+    VariantMachine sliderMachine;
+    VariantMachine armMachine;
+    VariantMachine specMachine;
+
     enum SliderState {
-        IDLE,
-        MANUP,
-        MANDOWN
+        RESET,
+        SPECPICKUP,
+        HIGHCHAMBERLOAD,
+        HIGHCHAMBERSCORE
+    }
+
+    enum ArmState {
+        STOWED,
+        STOWEDOPTION,
+        PICKUP,
+        SCORE
+    }
+
+    enum SpecState {
+        CLOSED,
+        DETECTCLOSED,
+
+        OPEN
     }
 
     @Override
@@ -62,31 +78,91 @@ public class TeleV1 extends OpMode {
         intake = new IntakeAction(hardwareMap);
         extendo = new ExtendoAction(hardwareMap);
 
-        sliderMachine = new StateMachineBuilder()
-                .state(SliderState.IDLE)
+        sliderMachine = new VariantMachineBuilder()
+                .variant(SliderState.RESET)
+                .onEnter(() -> slider.reset())
+                .setSwitch(() -> gamepad2.a)
+                .setDefault(true)
+                .variant(SliderState.SPECPICKUP)
                 .onEnter(() -> {
-                    slider.sliderLeftMotor.setPower(0);
-                    slider.sliderRightMotor.setPower(0);
+                    slider.specLoad();
+                    armMachine.setState(ArmState.STOWED);
                 })
-                .transition(() -> gamepad1.dpad_up)
-                .state(SliderState.MANUP)
+                .afterTime(250, () -> specMachine.setState(SpecState.OPEN))
+                .setSwitch(() -> gamepad2.share)
+                .variant(SliderState.HIGHCHAMBERLOAD)
                 .onEnter(() -> {
-                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    slider.sliderLeftMotor.setPower(0.5);
-                    slider.sliderRightMotor.setPower(0.5);
+                    slider.highChamberLoad();
                 })
-                .transition(() -> gamepad1.dpad_down)
-                .state(SliderState.MANDOWN)
+                .setSwitch(() -> gamepad2.options)
+                .variant(SliderState.HIGHCHAMBERSCORE)
                 .onEnter(() -> {
-                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    slider.sliderLeftMotor.setPower(-0.5);
-                    slider.sliderRightMotor.setPower(-0.5);
+                    slider.highChamberScore();
+                    extendo.goTo(MConstants.extendoIn); // TODO: Add machine
                 })
-                .transition(() -> !gamepad1.dpad_up && !gamepad1.dpad_down, SliderState.IDLE)
+                .afterTime(500, () -> specMachine.setState(SpecState.OPEN))
+                .setSwitch(() -> gamepad2.options)
                 .build();
         sliderMachine.start();
+
+        armMachine = new VariantMachineBuilder()
+                .variant(ArmState.STOWED)
+                .onEnter(() -> arm.stow())
+                .setDefault(true)
+                .variant(ArmState.STOWEDOPTION)
+                .onEnter(() -> {
+                    arm.stow();
+                })
+                .setSwitch(() -> gamepad2.options)
+                .variant(ArmState.PICKUP)
+                .onEnter(() -> arm.armPickup())
+                .setSwitch(() -> gamepad1.dpad_up)
+                .build();
+        armMachine.start();
+
+        specMachine = new VariantMachineBuilder()
+                .variant(SpecState.CLOSED)
+                .onEnter(() -> specClaw.closeClaw())
+                .setSwitch(() -> gamepad2.right_trigger > 0)
+                .setDefault(true)
+                .variant(SpecState.DETECTCLOSED)
+                .onEnter(() -> specClaw.closeClaw())
+                .afterTime(150, () -> {
+                    sliderMachine.setState(SliderState.HIGHCHAMBERLOAD);
+                    extendo.goTo(MConstants.extendoIn); // TODO: Add machine
+                })
+                .setSwitch(() -> specClaw.specimenDetected() && sliderMachine.getState() == SliderState.RESET)
+                .variant(SpecState.OPEN)
+                .onEnter(() -> specClaw.openClaw())
+                .setSwitch(() -> gamepad2.left_trigger > 0)
+                .build();
+        specMachine.start();
+
+//        sliderMachine = new StateMachineBuilder()
+//                .state(SliderState.IDLE)
+//                .onEnter(() -> {
+//                    slider.sliderLeftMotor.setPower(0);
+//                    slider.sliderRightMotor.setPower(0);
+//                })
+//                .transition(() -> gamepad1.dpad_up)
+//                .state(SliderState.MANUP)
+//                .onEnter(() -> {
+//                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                    slider.sliderLeftMotor.setPower(0.5);
+//                    slider.sliderRightMotor.setPower(0.5);
+//                })
+//                .transition(() -> gamepad1.dpad_down)
+//                .state(SliderState.MANDOWN)
+//                .onEnter(() -> {
+//                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                    slider.sliderLeftMotor.setPower(-0.5);
+//                    slider.sliderRightMotor.setPower(-0.5);
+//                })
+//                .transition(() -> !gamepad1.dpad_up && !gamepad1.dpad_down, SliderState.IDLE)
+//                .build();
+//        sliderMachine.start();
     }
 
     @Override
@@ -94,11 +170,14 @@ public class TeleV1 extends OpMode {
 
         follower.update();
         sliderMachine.update();
+        armMachine.update();
+        specMachine.update();
 
         /* Telemetry Outputs of our Follower */
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
+        telemetry.addData("Current State: ", sliderMachine.getState());
 
         if (gamepad1.right_trigger > 0.01 && !follower.isBusy()) {
             follower.followPath(follower.pathBuilder().addBezierLine(new Point(follower.getPose()), new Point(new Pose(17, 128, Math.toRadians(135)))).setLinearHeadingInterpolation(follower.getPose().getHeading(), Math.toRadians(135)).build(), false);

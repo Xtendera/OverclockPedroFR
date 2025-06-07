@@ -38,6 +38,22 @@ public class VariantMachine {
         }
     }
 
+    public Enum getState() {
+        return currentVariant.state;
+    }
+
+    public void setState(Enum newState) {
+        for (VariantState state : vmb) {
+            if (state.state == newState) {
+                if (currentVariant.onExit != null) currentVariant.onExit.execute();
+                currentState = state.state;
+                currentVariant = state;
+                if (currentVariant.onEnter != null) currentVariant.onEnter.execute();
+                break;
+            }
+        }
+    }
+
     public void update() {
         // BTW I wrote all this code, but I made GPT write the comments
         if (currentVariant != null) {
@@ -52,6 +68,7 @@ public class VariantMachine {
                 currentState = defaultVariant.state;
                 currentVariant = defaultVariant;
                 if (currentVariant.onEnter != null) currentVariant.onEnter.execute();
+                if (currentVariant.afterTime != null) currentVariant.afterTime.start();
             }
         }
         
@@ -77,6 +94,7 @@ public class VariantMachine {
                     }
                     
                     if (currentVariant.onEnter != null) currentVariant.onEnter.execute();
+                    if (currentVariant.afterTime != null) currentVariant.afterTime.start();
                     break; // Only handle one transition per update
                 } 
                 // For TRIGGER type, just switch to this state
@@ -85,6 +103,7 @@ public class VariantMachine {
                     currentState = state.state;
                     currentVariant = state;
                     if (currentVariant.onEnter != null) currentVariant.onEnter.execute();
+                    if (currentVariant.afterTime != null) currentVariant.afterTime.start();
                     break; // Only handle one transition per update
                 }
             }
@@ -93,6 +112,9 @@ public class VariantMachine {
         // Execute the current state's loop action
         if (currentVariant != null && currentVariant.loop != null) {
             currentVariant.loop.execute();
+        }
+        if (currentVariant != null && currentVariant.afterTime != null) {
+            currentVariant.afterTime.execute();
         }
     }
 }

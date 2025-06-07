@@ -3,7 +3,7 @@ package pedroPathing.fsm;
 import java.util.ArrayList;
 
 public class VariantMachineBuilder {
-    ArrayList<VariantState> states;
+    ArrayList<VariantState> states = new ArrayList<>();
     public VariantMachineBuilder variant(Enum dEnum) {
         VariantState newState = new VariantState();
         newState.state = dEnum;
@@ -34,6 +34,11 @@ public class VariantMachineBuilder {
 
     public VariantMachineBuilder onExit(Execute callback) {
         states.get(states.size() - 1).onExit = callback;
+        return this;
+    }
+
+    public VariantMachineBuilder afterTime(long time, Execute callback) {
+        states.get(states.size() - 1).afterTime = new TimedExecute(time, callback);
         return this;
     }
 

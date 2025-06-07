@@ -12,5 +12,6 @@ public class VariantState {
     public Execute onEnter;
     public Execute loop;
     public Execute onExit;
+    public TimedExecute afterTime;
 
 }

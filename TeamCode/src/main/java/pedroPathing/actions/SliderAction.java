@@ -140,7 +140,7 @@ public class SliderAction {
                 isInit = true;
             }
 
-            return sliderRightMotor.getCurrentPosition() >= (int) MConstants.specLoad || sliderLeftMotor.getCurrentPosition() >= (int) MConstants.specLoad;
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.specLoad) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.specLoad) <= threshold;
         }
     }
 
