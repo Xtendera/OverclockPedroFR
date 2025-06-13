@@ -7,6 +7,7 @@ import com.pedropathing.util.Constants;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import pedroPathing.actions.ArmAction;
@@ -47,12 +48,20 @@ public class TeleV1 extends OpMode {
     VariantMachine sliderMachine;
     VariantMachine armMachine;
     VariantMachine specMachine;
+    VariantMachine extendoMachine;
+    VariantMachine intakeMachine;
+    VariantMachine wristMachine;
+
+    Gamepad old1 = new Gamepad();
+    Gamepad old2 = new Gamepad();
 
     enum SliderState {
         RESET,
         SPECPICKUP,
         HIGHCHAMBERLOAD,
-        HIGHCHAMBERSCORE
+        HIGHCHAMBERSCORE,
+        HIGHBASKET,
+        LOWBASKET
     }
 
     enum ArmState {
@@ -69,6 +78,32 @@ public class TeleV1 extends OpMode {
         OPEN
     }
 
+    enum ExtendoState {
+        IN,
+        OUT
+    }
+
+    enum IntakeState {
+        ON,
+        OFF
+    }
+
+    enum WristState {
+        UP,
+        LEFT,
+        RIGHT,
+        DOWN,
+        NONE
+    }
+
+
+    public boolean facingSpecimen(){
+        double botHeading = Math.toDegrees(follower.getPose().getHeading());
+        boolean facingOurs = botHeading >-45 && botHeading < 45;
+        boolean facingTheirs = botHeading < -135|| botHeading > 135;
+        return facingOurs|| facingTheirs;
+    }
+
     @Override
     public void start() {
         slider = new SliderAction(hardwareMap);
@@ -77,6 +112,10 @@ public class TeleV1 extends OpMode {
         arm = new ArmAction(hardwareMap);
         intake = new IntakeAction(hardwareMap);
         extendo = new ExtendoAction(hardwareMap);
+
+        old1.copy(gamepad1);
+
+        old2.copy(gamepad2);
 
         sliderMachine = new VariantMachineBuilder()
                 .variant(SliderState.RESET)
@@ -94,29 +133,37 @@ public class TeleV1 extends OpMode {
                 .onEnter(() -> {
                     slider.highChamberLoad();
                 })
-                .setSwitch(() -> gamepad2.options)
+                .setSwitch(() -> gamepad2.options && !old2.options)
                 .variant(SliderState.HIGHCHAMBERSCORE)
                 .onEnter(() -> {
                     slider.highChamberScore();
-                    extendo.goTo(MConstants.extendoIn); // TODO: Add machine
+                    extendoMachine.setState(ExtendoState.IN);
                 })
                 .afterTime(500, () -> specMachine.setState(SpecState.OPEN))
-                .setSwitch(() -> gamepad2.options)
+                .setSwitch(() -> gamepad2.options && !old2.options)
+                .variant(SliderState.HIGHBASKET)
+                .onEnter(() -> slider.highBasket())
+                .setSwitch(() -> gamepad2.y && sliderMachine.getState() == SliderState.RESET)
+                .variant(SliderState.LOWBASKET)
+                .onEnter(() -> slider.lowBasket())
+                .setSwitch(() -> gamepad2.x && sliderMachine.getState() == SliderState.RESET)
                 .build();
         sliderMachine.start();
 
         armMachine = new VariantMachineBuilder()
                 .variant(ArmState.STOWED)
                 .onEnter(() -> arm.stow())
+                .setSwitch(() -> extendoMachine.getState() == ExtendoState.IN && intakeMachine.getState() == IntakeState.OFF && gamepad2.a && !old2.a)
                 .setDefault(true)
                 .variant(ArmState.STOWEDOPTION)
-                .onEnter(() -> {
-                    arm.stow();
-                })
+                .onEnter(() -> arm.stow())
                 .setSwitch(() -> gamepad2.options)
                 .variant(ArmState.PICKUP)
                 .onEnter(() -> arm.armPickup())
-                .setSwitch(() -> gamepad1.dpad_up)
+                .setSwitch(() -> gamepad1.dpad_up || (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .variant(ArmState.SCORE)
+                .onEnter(() -> arm.armScoreTele())
+                .setSwitch(() -> (gamepad2.y && sliderMachine.getState() == SliderState.HIGHBASKET) || (gamepad2.x && sliderMachine.getState() == SliderState.LOWBASKET))
                 .build();
         armMachine.start();
 
@@ -129,7 +176,7 @@ public class TeleV1 extends OpMode {
                 .onEnter(() -> specClaw.closeClaw())
                 .afterTime(150, () -> {
                     sliderMachine.setState(SliderState.HIGHCHAMBERLOAD);
-                    extendo.goTo(MConstants.extendoIn); // TODO: Add machine
+                    extendoMachine.setState(ExtendoState.IN);
                 })
                 .setSwitch(() -> specClaw.specimenDetected() && sliderMachine.getState() == SliderState.RESET)
                 .variant(SpecState.OPEN)
@@ -138,40 +185,61 @@ public class TeleV1 extends OpMode {
                 .build();
         specMachine.start();
 
-//        sliderMachine = new StateMachineBuilder()
-//                .state(SliderState.IDLE)
-//                .onEnter(() -> {
-//                    slider.sliderLeftMotor.setPower(0);
-//                    slider.sliderRightMotor.setPower(0);
-//                })
-//                .transition(() -> gamepad1.dpad_up)
-//                .state(SliderState.MANUP)
-//                .onEnter(() -> {
-//                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                    slider.sliderLeftMotor.setPower(0.5);
-//                    slider.sliderRightMotor.setPower(0.5);
-//                })
-//                .transition(() -> gamepad1.dpad_down)
-//                .state(SliderState.MANDOWN)
-//                .onEnter(() -> {
-//                    slider.sliderLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                    slider.sliderRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                    slider.sliderLeftMotor.setPower(-0.5);
-//                    slider.sliderRightMotor.setPower(-0.5);
-//                })
-//                .transition(() -> !gamepad1.dpad_up && !gamepad1.dpad_down, SliderState.IDLE)
-//                .build();
-//        sliderMachine.start();
+        extendoMachine = new VariantMachineBuilder()
+                .variant(ExtendoState.IN)
+                .onEnter(() -> extendo.goTo(MConstants.extendoIn))
+                .setSwitch(() -> gamepad2.a || (gamepad2.y && sliderMachine.getState() == SliderState.HIGHBASKET) || (gamepad2.x && sliderMachine.getState() == SliderState.LOWBASKET))
+                .setDefault(true)
+                .variant(ExtendoState.OUT)
+                .onEnter(() -> extendo.goTo(MConstants.extendoOut))
+                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .build();
+        extendoMachine.start();
+
+        intakeMachine = new VariantMachineBuilder()
+                .variant(IntakeState.OFF)
+                .onEnter(() -> {
+                    intake.stoptake();
+                    intake.clearAction();
+                })
+                .setSwitch(() -> gamepad2.a)
+                .setDefault(true)
+                .variant(IntakeState.ON)
+                .onEnter(() -> intake.intake())
+                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .build();
+        intakeMachine.start();
+
+        wristMachine = new VariantMachineBuilder()
+                .variant(WristState.UP)
+                .onEnter(() -> wrist.goTo(MConstants.wristUp))
+                .setSwitch(() -> gamepad2.dpad_up)
+                .setDefault(true)
+                .variant(WristState.DOWN)
+                .onEnter(() -> wrist.goTo(MConstants.wristDown))
+                .setSwitch(() -> gamepad2.dpad_down)
+                .variant(WristState.UP)
+                .onEnter(() -> wrist.goTo(MConstants.wristLeft))
+                .setSwitch(() -> gamepad2.dpad_left)
+                .variant(WristState.UP)
+                .onEnter(() -> wrist.goTo(MConstants.wristRight))
+                .setSwitch(() -> gamepad2.dpad_right)
+
+                .build();
     }
 
     @Override
     public void loop() {
-
+        // Update all Subsystems
         follower.update();
         sliderMachine.update();
         armMachine.update();
         specMachine.update();
+        extendoMachine.update();
+        intakeMachine.update();
+
+        old1.copy(gamepad1);
+        old2.copy(gamepad2);
 
         /* Telemetry Outputs of our Follower */
         telemetry.addData("X", follower.getPose().getX());

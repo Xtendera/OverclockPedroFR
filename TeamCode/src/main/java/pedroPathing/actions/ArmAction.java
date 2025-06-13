@@ -27,6 +27,11 @@ public class ArmAction {
         return true;
     }
 
+    public boolean armScoreTele() {
+        new ArmScoreTele().run();
+        return true;
+    }
+
     public class ArmPickup implements Action {
 
         @Override
@@ -44,4 +49,14 @@ public class ArmAction {
             return true;
         }
     }
+
+    public class ArmScoreTele implements Action {
+
+        @Override
+        public boolean run() {
+            arm.setPosition(MConstants.armScoreTele);
+            return true;
+        }
+    }
+
 }

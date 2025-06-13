@@ -14,17 +14,24 @@ public class MConstants {
     public static double specLoad = 30*ticksPerMM;
 //    public static double highBasketScore = 802*ticksPerMM;
     public static double highBasketScore = 870*ticksPerMM;
+    public static double highBasket = 862*ticksPerMM; // TeleOP only
+    public static double lowBasket = 372*ticksPerMM; // TeleOP only
+
     // Wrist
-    public static double wristUp = 0.68d;
+    public static double wristLeft = 1;
+    public static double wristRight = 0.33;
+    public static double wristUp = 0.68;
+    public static double wristDown = -1;
+
     public static double wristStrafe = 0.95d;
 
     public static double wristSpecStrafe = -0.95d;
-    public static double wristLeft = 1d;
 
     // Arm
     public static double armStowed = 0.685;
     public static double armPickup = 0.06;
     public static double armScore = 0.45; // 0.6
+    public static double armScoreTele = 0.5;
 
     // Spec Claw
     public static double specClawClosed = 0.27;

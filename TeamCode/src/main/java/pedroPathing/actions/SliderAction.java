@@ -52,6 +52,19 @@ public class SliderAction {
         return currAction.run();
     }
 
+    // TeleOP only variant
+    public boolean highBasket() {
+        if (!(currAction instanceof HighBasket))
+            currAction = new HighBasket();
+        return currAction.run();
+    }
+
+    public boolean lowBasket() {
+        if (!(currAction instanceof LowBasket))
+            currAction = new LowBasket();
+        return currAction.run();
+    }
+
     public boolean reset() {
         if (!(currAction instanceof Reset))
             currAction = new Reset();
@@ -179,6 +192,44 @@ public class SliderAction {
             }
 
             return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.highBasketScore) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.highBasketScore) <= threshold;
+        }
+    }
+
+    public class HighBasket implements Action {
+        private boolean isInit = false;
+
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                sliderRightMotor.setTargetPosition((int) (MConstants.highBasket));
+                sliderLeftMotor.setTargetPosition((int) (MConstants.highBasket));
+                sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderRightMotor.setPower(1.0f);
+                sliderLeftMotor.setPower(1.0f);
+                isInit = true;
+            }
+
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.highBasket) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.highBasket) <= threshold;
+        }
+    }
+
+    public class LowBasket implements Action {
+        private boolean isInit = false;
+
+        @Override
+        public boolean run() {
+            if (!isInit) {
+                sliderRightMotor.setTargetPosition((int) (MConstants.lowBasket));
+                sliderLeftMotor.setTargetPosition((int) (MConstants.lowBasket));
+                sliderRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                sliderRightMotor.setPower(1.0f);
+                sliderLeftMotor.setPower(1.0f);
+                isInit = true;
+            }
+
+            return Math.abs(sliderRightMotor.getCurrentPosition() - (int) MConstants.lowBasket) <= threshold && Math.abs(sliderLeftMotor.getCurrentPosition() - (int) MConstants.lowBasket) <= threshold;
         }
     }
 }
