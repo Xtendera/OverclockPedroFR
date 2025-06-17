@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import pedroPathing.constants.MConstants;
 
 public class WristAction {
-    private final Servo wrist;
+    public final Servo wrist;
 
     public WristAction(HardwareMap hardwareMap) {
         wrist = hardwareMap.servo.get("wrist");

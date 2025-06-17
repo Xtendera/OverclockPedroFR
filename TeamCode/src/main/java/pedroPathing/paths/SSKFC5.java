@@ -22,6 +22,7 @@ import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
 import pedroPathing.constants.MConstants;
+import pedroPathing.teleop.Data;
 
 @Autonomous(name = "SSKFC5", group = "AAA")
 public class SSKFC5 extends OpMode {
@@ -154,6 +155,7 @@ public class SSKFC5 extends OpMode {
         subs.add(sub1P4);
     }
     public void autonomousPathUpdate() {
+        Data.getInstance().currPose = follower.getPose();
         switch (pathState) {
             case 0:
                 wrist.wristUp();

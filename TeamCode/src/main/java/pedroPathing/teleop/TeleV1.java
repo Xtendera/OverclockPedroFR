@@ -15,6 +15,7 @@ import pedroPathing.actions.ExtendoAction;
 import pedroPathing.actions.IntakeAction;
 import pedroPathing.actions.SliderAction;
 import pedroPathing.actions.SpecClawAction;
+import pedroPathing.actions.SweeperAction;
 import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
@@ -32,7 +33,7 @@ import pedroPathing.fsm.VariantMachineBuilder;
 @TeleOp(name = "TeleV1", group = "AAA")
 public class TeleV1 extends OpMode {
     private Follower follower;
-    private final Pose startPose = new Pose(8, 114, Math.toRadians(90));
+    private Pose startPose = new Pose(0, 0, Math.toRadians(0));
 
     DcMotor leftFront, rightFront, leftBack, rightBack;
     IMU imu;
@@ -44,6 +45,7 @@ public class TeleV1 extends OpMode {
     private SpecClawAction specClaw;
 
     private ExtendoAction extendo;
+    private SweeperAction sweeper;
 
     VariantMachine sliderMachine;
     VariantMachine armMachine;
@@ -51,6 +53,7 @@ public class TeleV1 extends OpMode {
     VariantMachine extendoMachine;
     VariantMachine intakeMachine;
     VariantMachine wristMachine;
+    VariantMachine sweeperMachine;
 
     Gamepad old1 = new Gamepad();
     Gamepad old2 = new Gamepad();
@@ -85,7 +88,8 @@ public class TeleV1 extends OpMode {
 
     enum IntakeState {
         ON,
-        OFF
+        OFF,
+        REVERSE
     }
 
     enum WristState {
@@ -96,6 +100,10 @@ public class TeleV1 extends OpMode {
         NONE
     }
 
+    enum SweeperState {
+        IN,
+        OUT
+    }
 
     public boolean facingSpecimen(){
         double botHeading = Math.toDegrees(follower.getPose().getHeading());
@@ -112,6 +120,7 @@ public class TeleV1 extends OpMode {
         arm = new ArmAction(hardwareMap);
         intake = new IntakeAction(hardwareMap);
         extendo = new ExtendoAction(hardwareMap);
+        sweeper = new SweeperAction(hardwareMap);
 
         old1.copy(gamepad1);
 
@@ -160,7 +169,7 @@ public class TeleV1 extends OpMode {
                 .setSwitch(() -> gamepad2.options)
                 .variant(ArmState.PICKUP)
                 .onEnter(() -> arm.armPickup())
-                .setSwitch(() -> gamepad1.dpad_up || (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
                 .variant(ArmState.SCORE)
                 .onEnter(() -> arm.armScoreTele())
                 .setSwitch(() -> (gamepad2.y && sliderMachine.getState() == SliderState.HIGHBASKET) || (gamepad2.x && sliderMachine.getState() == SliderState.LOWBASKET))
@@ -202,11 +211,14 @@ public class TeleV1 extends OpMode {
                     intake.stoptake();
                     intake.clearAction();
                 })
-                .setSwitch(() -> gamepad2.a)
+                .setSwitch(() -> gamepad2.a || (intake.intakeFull() && intakeMachine.getState() == IntakeState.ON))
                 .setDefault(true)
                 .variant(IntakeState.ON)
                 .onEnter(() -> intake.intake())
-                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b) || gamepad2.right_bumper)
+                .variant(IntakeState.REVERSE)
+                .onEnter(() -> intake.outake())
+                .setTrigger(() -> gamepad2.left_bumper)
                 .build();
         intakeMachine.start();
 
@@ -218,14 +230,26 @@ public class TeleV1 extends OpMode {
                 .variant(WristState.DOWN)
                 .onEnter(() -> wrist.goTo(MConstants.wristDown))
                 .setSwitch(() -> gamepad2.dpad_down)
-                .variant(WristState.UP)
+                .variant(WristState.LEFT)
                 .onEnter(() -> wrist.goTo(MConstants.wristLeft))
                 .setSwitch(() -> gamepad2.dpad_left)
-                .variant(WristState.UP)
+                .variant(WristState.RIGHT)
                 .onEnter(() -> wrist.goTo(MConstants.wristRight))
                 .setSwitch(() -> gamepad2.dpad_right)
-
+                .variant(WristState.NONE)
+                .setSwitch(() -> gamepad2.left_stick_x != 0.0f)
                 .build();
+        wristMachine.start();
+
+        sweeperMachine = new VariantMachineBuilder()
+                .variant(SweeperState.IN)
+                .onEnter(() -> sweeper.setPosition(MConstants.flipperIn))
+                .setDefault(true)
+                .variant(SweeperState.OUT)
+                .onEnter(() -> sweeper.setPosition(MConstants.flipperOutTeleOP))
+                .setTrigger(() -> gamepad1.a)
+                .build();
+        sweeperMachine.start();
     }
 
     @Override
@@ -237,6 +261,8 @@ public class TeleV1 extends OpMode {
         specMachine.update();
         extendoMachine.update();
         intakeMachine.update();
+        wristMachine.update();
+        sweeperMachine.update();
 
         old1.copy(gamepad1);
         old2.copy(gamepad2);
@@ -245,7 +271,8 @@ public class TeleV1 extends OpMode {
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
-        telemetry.addData("Current State: ", sliderMachine.getState());
+        telemetry.addData("Current Slider State: ", sliderMachine.getState());
+        telemetry.addData("Current Wrist State: ", wristMachine.getState());
 
         if (gamepad1.right_trigger > 0.01 && !follower.isBusy()) {
             follower.followPath(follower.pathBuilder().addBezierLine(new Point(follower.getPose()), new Point(new Pose(17, 128, Math.toRadians(135)))).setLinearHeadingInterpolation(follower.getPose().getHeading(), Math.toRadians(135)).build(), false);
@@ -254,7 +281,19 @@ public class TeleV1 extends OpMode {
             updateDriveVelocities();
         }
 
+        updateWristPosition();
+
         telemetry.update();
+    }
+
+    void updateWristPosition() {
+        double wristPos = wrist.wrist.getPosition();
+        if(gamepad2.left_stick_x < 0 && wristPos < 1){
+            wristPos +=0.03 * -gamepad2.left_stick_x;
+        }else if(gamepad2.left_stick_x > 0 && wristPos > -1){
+            wristPos -=0.03 * gamepad2.left_stick_x;
+        }
+        wrist.wrist.setPosition(wristPos);
     }
 
     void updateDriveVelocities() {
@@ -286,6 +325,8 @@ public class TeleV1 extends OpMode {
     /** This method is call once when init is played, it initializes the follower **/
     @Override
     public void init() {
+        if (Data.getInstance().currPose != null)
+            startPose = Data.getInstance().currPose;
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);

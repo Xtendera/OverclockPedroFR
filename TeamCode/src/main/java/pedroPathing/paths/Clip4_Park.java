@@ -25,6 +25,7 @@ import pedroPathing.actions.WristAction;
 import pedroPathing.constants.FConstants;
 import pedroPathing.constants.LConstants;
 import pedroPathing.constants.MConstants;
+import pedroPathing.teleop.Data;
 
 @Autonomous(name = "Clip4_Park", group = "AAA")
 public class Clip4_Park extends OpMode {
@@ -199,6 +200,7 @@ public class Clip4_Park extends OpMode {
      * Everytime the switch changes case, it will reset the timer. (This is because wof the setPathState() method)
      * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
     public void autonomousPathUpdate() {
+        Data.getInstance().currPose = follower.getPose();
         switch (pathState) {
             case 0:
                 /**Raise Slide**/
