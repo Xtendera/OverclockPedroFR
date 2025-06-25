@@ -4,8 +4,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class ExtendoAction {
-    private final Servo extendoR;
-    private final Servo extendoL;
+    public final Servo extendoR;
+    public final Servo extendoL;
 
     public ExtendoAction(HardwareMap hardwareMap) {
         extendoR = hardwareMap.servo.get("extendoRight");

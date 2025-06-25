@@ -32,6 +32,7 @@ public class MConstants {
     public static double armPickup = 0.06;
     public static double armScore = 0.45; // 0.6
     public static double armScoreTele = 0.5;
+    public static double armHover = 0.21d;
 
     // Spec Claw
     public static double specClawClosed = 0.27;

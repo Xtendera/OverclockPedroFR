@@ -67,7 +67,7 @@ public class SSKFC5 extends OpMode {
     private final Pose sub1Pose4 = new Pose(60, 98, Math.toRadians(300));
 
     private int pathState;
-    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3, park, sub1P1, sub1P2, sub1P3, sub1P4;
+    private PathChain scorePreload, pickup1Pre, pickup1, score1, pickup2Pre, pickup2, score2, pickup3Pre, pickup3, pickup3Post, score3, park, sub1P1, sub1S1, sub1P2, sub1P3, sub1P4;
 
     private PathChain currPickupPre, currPickup, currScore;
 
@@ -132,10 +132,13 @@ public class SSKFC5 extends OpMode {
                 .addBezierCurve(new Point(scorePose), new Point(parkControlPose), new Point(parkPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
                 .build();
-
         sub1P1 = follower.pathBuilder()
                 .addBezierCurve(new Point(scorePose), new Point(sub1Control), new Point(sub1Pose1))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), sub1Pose1.getHeading())
+                .build();
+        sub1S1 = follower.pathBuilder()
+                .addBezierCurve(new Point(sub1Pose1), new Point(sub1Control), new Point(scorePose))
+                .setLinearHeadingInterpolation(sub1Pose1.getHeading(), scorePose.getHeading())
                 .build();
         sub1P2 = follower.pathBuilder()
                 .addBezierLine(new Point(sub1Pose1), new Point(sub1Pose2))
@@ -307,6 +310,7 @@ public class SSKFC5 extends OpMode {
                 if (pathTimer.getElapsedTime() >= 250) {
                     wrist.wristUp();
                     sweeper.setPosition(MConstants.flipperIn);
+                    arm.armPickup();
                     extendo.goTo(MConstants.extendoScore);
                     setPathState(17);
                 }
@@ -314,16 +318,42 @@ public class SSKFC5 extends OpMode {
             case 17:
                 if (pathTimer.getElapsedTime() >= 350) {
                     intake.intake(true);
-                    arm.armPickup();
                     extendo.goTo(MConstants.extendoOut);
                     setPathState(18);
                 }
                 break;
             case 18:
-                if (intake.intake(true) || pathTimer.getElapsedTime() > 1100) {
+                if (intake.intakeFull() && !intake.intakeFullColored()) {
+                    intake.outake();
+                    arm.stow();
+                    extendo.goTo(MConstants.extendoIn);
+                    setPathState(-1);
+                } else if (intake.intake(true) || pathTimer.getElapsedTime() > 2000) {
                     intake.stoptake();
                     arm.stow();
                     extendo.goTo(MConstants.extendoIn);
+                    setPathState(19);
+                }
+                break;
+            case 19:
+                if (pathTimer.getElapsedTime() > 200) {
+                    follower.followPath(sub1S1);
+//                    arm.armScore();
+                    setPathState(20);
+                }
+                break;
+            case 20:
+                if (pathTimer.getElapsedTime() > 500) {
+                    slider.highBasketScore();
+                    setPathState(21);
+                }
+                break;
+            case 21:
+                if (!follower.isBusy() & slider.highBasketScore()) {
+                    slider.clearAction();
+                    arm.armScore();
+                    intake.outake();
+                    setPathState(-1);
                 }
                 break;
         }

@@ -32,6 +32,10 @@ public class ArmAction {
         return true;
     }
 
+    public void armHover() {
+        arm.setPosition(MConstants.armHover);
+    }
+
     public class ArmPickup implements Action {
 
         @Override

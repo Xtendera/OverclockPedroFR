@@ -71,7 +71,8 @@ public class TeleV1 extends OpMode {
         STOWED,
         STOWEDOPTION,
         PICKUP,
-        SCORE
+        SCORE,
+        HOVER
     }
 
     enum SpecState {
@@ -147,6 +148,7 @@ public class TeleV1 extends OpMode {
                 .onEnter(() -> {
                     slider.highChamberScore();
                     extendoMachine.setState(ExtendoState.IN);
+                    wristMachine.setState(WristState.UP);
                 })
                 .afterTime(500, () -> specMachine.setState(SpecState.OPEN))
                 .setSwitch(() -> gamepad2.options && !old2.options)
@@ -169,10 +171,13 @@ public class TeleV1 extends OpMode {
                 .setSwitch(() -> gamepad2.options)
                 .variant(ArmState.PICKUP)
                 .onEnter(() -> arm.armPickup())
-                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b))
+                .setSwitch(() -> sliderMachine.getState() == SliderState.RESET && armMachine.getState() == ArmState.HOVER && gamepad2.b && !old2.b)
                 .variant(ArmState.SCORE)
                 .onEnter(() -> arm.armScoreTele())
                 .setSwitch(() -> (gamepad2.y && sliderMachine.getState() == SliderState.HIGHBASKET) || (gamepad2.x && sliderMachine.getState() == SliderState.LOWBASKET))
+                .variant(ArmState.HOVER)
+                .onEnter(() -> arm.armHover())
+                .setSwitch(() -> (sliderMachine.getState() == SliderState.RESET && gamepad2.b && !old2.b))
                 .build();
         armMachine.start();
 
@@ -210,6 +215,15 @@ public class TeleV1 extends OpMode {
                 .onEnter(() -> {
                     intake.stoptake();
                     intake.clearAction();
+
+                    if (intake.intakeFull()) {
+                        if (facingSpecimen()) {
+                            armMachine.setState(ArmState.HOVER);
+                        } else {
+                            armMachine.setState(ArmState.STOWED);
+                            wristMachine.setState(WristState.LEFT);
+                        }
+                    }
                 })
                 .setSwitch(() -> gamepad2.a || (intake.intakeFull() && intakeMachine.getState() == IntakeState.ON))
                 .setDefault(true)
@@ -273,6 +287,8 @@ public class TeleV1 extends OpMode {
         telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
         telemetry.addData("Current Slider State: ", sliderMachine.getState());
         telemetry.addData("Current Wrist State: ", wristMachine.getState());
+        telemetry.addData("Current Extendo L: ", extendo.extendoL.getPosition());
+        telemetry.addData("Current Extendo R: ", extendo.extendoR.getPosition());
 
         if (gamepad1.right_trigger > 0.01 && !follower.isBusy()) {
             follower.followPath(follower.pathBuilder().addBezierLine(new Point(follower.getPose()), new Point(new Pose(17, 128, Math.toRadians(135)))).setLinearHeadingInterpolation(follower.getPose().getHeading(), Math.toRadians(135)).build(), false);
@@ -316,10 +332,15 @@ public class TeleV1 extends OpMode {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        leftFront.setPower(frontLeftPower);
-        leftBack.setPower(backLeftPower);
-        rightFront.setPower(frontRightPower);
-        rightBack.setPower(backRightPower);
+        float speedMultiplier = 1.0f;
+        if (gamepad1.b) {
+            speedMultiplier = 0.5f;
+        }
+
+        leftFront.setPower(frontLeftPower * speedMultiplier);
+        leftBack.setPower(backLeftPower * speedMultiplier);
+        rightFront.setPower(frontRightPower * speedMultiplier);
+        rightBack.setPower(backRightPower * speedMultiplier);
     }
 
     /** This method is call once when init is played, it initializes the follower **/
